@@ -13,10 +13,11 @@ This repository started from a fork of `viem`, and is being adapted toward TOS-n
 
 ## What Is Working Now
 
-- Private-key based local accounts
-- HD and mnemonic account derivation
+- Private-key, HD, and mnemonic-based local accounts
 - Native 32-byte address derivation from secp256k1 keys
-- Signing helpers and wallet-oriented account utilities
+- Native transaction typing, serialization, and signing
+- Typed data signing on top of the 32-byte account model
+- Core account and address test coverage focused on the native path
 
 ## Scope
 
