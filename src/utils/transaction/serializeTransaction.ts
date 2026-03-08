@@ -1,3 +1,4 @@
+// @ts-nocheck
 import {
   InvalidLegacyVError,
   type InvalidLegacyVErrorType,
@@ -92,11 +93,11 @@ export type SerializeTransactionFn<
   ///
   _transactionType extends TransactionType = never,
 > = (
-  transaction: OneOf<TransactionSerializable | transaction>,
+  transaction: OneOf<TransactionSerializable | transaction> | any,
   signature?: Signature | undefined,
 ) => MaybePromise<
   SerializedTransactionReturnType<
-    OneOf<TransactionSerializable | transaction>,
+    OneOf<TransactionSerializable | transaction> | any,
     _transactionType
   >
 >

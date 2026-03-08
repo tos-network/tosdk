@@ -1,4 +1,5 @@
 import { secp256k1 } from '@noble/curves/secp256k1'
+import type { Address } from 'abitype'
 
 import type { ErrorType } from '../../errors/utils.js'
 import type { Hex } from '../../types/misc.js'
@@ -10,7 +11,6 @@ import {
   type PublicKeyToAddressErrorType,
   publicKeyToAddress,
 } from './publicKeyToAddress.js'
-import type { Address } from './address.js'
 
 export type PrivateKeyToAddressErrorType =
   | BytesToHexErrorType

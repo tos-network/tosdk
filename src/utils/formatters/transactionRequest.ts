@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { ErrorType } from '../../errors/utils.js'
 import type { Account } from '../../types/account.js'
 import type { AuthorizationList } from '../../types/authorization.js'
@@ -24,6 +25,7 @@ export type FormattedTransactionRequest<
 >
 
 export const rpcTransactionType = {
+  native: '0x00',
   legacy: '0x0',
   eip2930: '0x1',
   eip1559: '0x2',

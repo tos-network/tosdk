@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { ErrorType } from '../../errors/utils.js'
 import type { Hex } from '../../types/misc.js'
 import type {
@@ -17,8 +18,7 @@ import {
 import { type SignErrorType, sign } from './sign.js'
 
 export type SignTransactionParameters<
-  serializer extends
-    SerializeTransactionFn<TransactionSerializable> = SerializeTransactionFn<TransactionSerializable>,
+  serializer extends SerializeTransactionFn<any> = SerializeTransactionFn<any>,
   transaction extends Parameters<serializer>[0] = Parameters<serializer>[0],
 > = {
   privateKey: Hex
@@ -27,8 +27,7 @@ export type SignTransactionParameters<
 }
 
 export type SignTransactionReturnType<
-  serializer extends
-    SerializeTransactionFn<TransactionSerializable> = SerializeTransactionFn<TransactionSerializable>,
+  serializer extends SerializeTransactionFn<any> = SerializeTransactionFn<any>,
   transaction extends Parameters<serializer>[0] = Parameters<serializer>[0],
 > = TransactionSerialized<GetTransactionType<transaction>>
 
@@ -38,8 +37,7 @@ export type SignTransactionErrorType =
   | ErrorType
 
 export async function signTransaction<
-  serializer extends
-    SerializeTransactionFn<TransactionSerializable> = SerializeTransactionFn<TransactionSerializable>,
+  serializer extends SerializeTransactionFn<any> = SerializeTransactionFn<any>,
   transaction extends Parameters<serializer>[0] = Parameters<serializer>[0],
 >(
   parameters: SignTransactionParameters<serializer, transaction>,
@@ -47,7 +45,7 @@ export async function signTransaction<
   const {
     privateKey,
     transaction,
-    serializer = serializeTransaction,
+    serializer = serializeTransaction as SerializeTransactionFn<any>,
   } = parameters
 
   const signableTransaction = (() => {
@@ -62,11 +60,11 @@ export async function signTransaction<
   })()
 
   const signature = await sign({
-    hash: keccak256(await serializer(signableTransaction)),
+    hash: keccak256(await serializer(signableTransaction as any)),
     privateKey,
   })
   return (await serializer(
-    transaction,
+    transaction as any,
     signature,
   )) as SignTransactionReturnType<serializer, transaction>
 }

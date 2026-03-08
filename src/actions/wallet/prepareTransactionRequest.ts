@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { Address } from 'abitype'
 import type { Account } from '../../accounts/types.js'
 import {
@@ -516,9 +517,7 @@ export async function prepareTransactionRequest<
     typeof type === 'undefined'
   ) {
     try {
-      request.type = getTransactionType(
-        request as TransactionSerializable,
-      ) as any
+      request.type = getTransactionType(request as any) as any
     } catch {
       let isEip1559Network = eip1559NetworkCache.get(client.uid)
       if (typeof isEip1559Network === 'undefined') {

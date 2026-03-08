@@ -47,35 +47,37 @@ export function getTransactionType<
     TransactionSerializableGeneric | TransactionRequestGeneric
   >,
 >(transaction: transaction): GetTransactionType<transaction> {
-  if (transaction.type)
+  const tx = transaction as Record<string, unknown>
+
+  if (tx.type)
     return transaction.type as GetTransactionType<transaction>
 
   if (
-    typeof transaction.from !== 'undefined' &&
-    typeof transaction.signerType !== 'undefined'
+    typeof tx.from !== 'undefined' &&
+    typeof tx.signerType !== 'undefined'
   )
     return 'native' as any
 
-  if (typeof transaction.authorizationList !== 'undefined')
+  if (typeof tx.authorizationList !== 'undefined')
     return 'eip7702' as any
 
   if (
-    typeof transaction.blobs !== 'undefined' ||
-    typeof transaction.blobVersionedHashes !== 'undefined' ||
-    typeof transaction.maxFeePerBlobGas !== 'undefined' ||
-    typeof transaction.sidecars !== 'undefined'
+    typeof tx.blobs !== 'undefined' ||
+    typeof tx.blobVersionedHashes !== 'undefined' ||
+    typeof tx.maxFeePerBlobGas !== 'undefined' ||
+    typeof tx.sidecars !== 'undefined'
   )
     return 'eip4844' as any
 
   if (
-    typeof transaction.maxFeePerGas !== 'undefined' ||
-    typeof transaction.maxPriorityFeePerGas !== 'undefined'
+    typeof tx.maxFeePerGas !== 'undefined' ||
+    typeof tx.maxPriorityFeePerGas !== 'undefined'
   ) {
     return 'eip1559' as any
   }
 
-  if (typeof transaction.gasPrice !== 'undefined') {
-    if (typeof transaction.accessList !== 'undefined') return 'eip2930' as any
+  if (typeof tx.gasPrice !== 'undefined') {
+    if (typeof tx.accessList !== 'undefined') return 'eip2930' as any
     return 'legacy' as any
   }
 

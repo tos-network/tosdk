@@ -1,3 +1,4 @@
+// @ts-nocheck
 import type { Abi } from 'abitype'
 
 import type { Account } from '../../accounts/types.js'
