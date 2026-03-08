@@ -11,6 +11,7 @@ import type {
 } from '../../types/misc.js'
 import type {
   TransactionSerializable,
+  TransactionSerializableNative,
   TransactionSerializableEIP1559,
   TransactionSerializableEIP2930,
   TransactionSerializableEIP4844,
@@ -18,6 +19,7 @@ import type {
   TransactionSerializableGeneric,
   TransactionSerializableLegacy,
   TransactionSerialized,
+  TransactionSerializedNative,
   TransactionSerializedEIP1559,
   TransactionSerializedEIP2930,
   TransactionSerializedEIP4844,
@@ -56,11 +58,13 @@ import {
 import { type ToRlpErrorType, toRlp } from '../encoding/toRlp.js'
 
 import {
+  type AssertTransactionNativeErrorType,
   type AssertTransactionEIP1559ErrorType,
   type AssertTransactionEIP2930ErrorType,
   type AssertTransactionEIP4844ErrorType,
   type AssertTransactionEIP7702ErrorType,
   type AssertTransactionLegacyErrorType,
+  assertTransactionNative,
   assertTransactionEIP1559,
   assertTransactionEIP2930,
   assertTransactionEIP4844,
@@ -99,6 +103,7 @@ export type SerializeTransactionFn<
 
 export type SerializeTransactionErrorType =
   | GetTransactionTypeErrorType
+  | SerializeTransactionNativeErrorType
   | SerializeTransactionEIP1559ErrorType
   | SerializeTransactionEIP2930ErrorType
   | SerializeTransactionEIP4844ErrorType
@@ -115,6 +120,12 @@ export function serializeTransaction<
   signature?: Signature | undefined,
 ): SerializedTransactionReturnType<transaction, _transactionType> {
   const type = getTransactionType(transaction) as GetTransactionType
+
+  if (type === 'native')
+    return serializeTransactionNative(
+      transaction as TransactionSerializableNative,
+      signature,
+    ) as SerializedTransactionReturnType<transaction>
 
   if (type === 'eip1559')
     return serializeTransactionEIP1559(
@@ -144,6 +155,42 @@ export function serializeTransaction<
     transaction as TransactionSerializableLegacy,
     signature as SignatureLegacy,
   ) as SerializedTransactionReturnType<transaction>
+}
+
+type SerializeTransactionNativeErrorType =
+  | AssertTransactionNativeErrorType
+  | ConcatHexErrorType
+  | NumberToHexErrorType
+  | ToRlpErrorType
+  | SerializeAccessListErrorType
+  | ErrorType
+
+function serializeTransactionNative(
+  transaction: TransactionSerializableNative,
+  signature?: Signature | undefined,
+): TransactionSerializedNative {
+  const { accessList, chainId, data, from, gas, nonce, signerType, to, value } =
+    transaction
+
+  assertTransactionNative(transaction)
+
+  const serializedTransaction = [
+    toMinimalQuantityHex(chainId),
+    toMinimalQuantityHex(nonce),
+    toMinimalQuantityHex(gas),
+    to ?? '0x',
+    toMinimalQuantityHex(value),
+    data ?? '0x',
+    serializeAccessList(accessList),
+    from,
+    bytesToHex(new TextEncoder().encode(signerType)),
+    ...toNativeSignatureArray(transaction, signature),
+  ]
+
+  return concatHex([
+    '0x00',
+    toRlp(serializedTransaction),
+  ]) as TransactionSerializedNative
 }
 
 type SerializeTransactionEIP7702ErrorType =
@@ -469,4 +516,37 @@ export function toYParitySignatureArray(
   })()
 
   return [yParity_, r === '0x00' ? '0x' : r, s === '0x00' ? '0x' : s]
+}
+
+function toMinimalQuantityHex(value: bigint | number | undefined | null) {
+  if (typeof value === 'undefined' || value === null || value === 0 || value === 0n)
+    return '0x'
+  return numberToHex(value)
+}
+
+function toNativeSignatureArray(
+  transaction: TransactionSerializableNative,
+  signature_?: Signature | undefined,
+) {
+  const signature = signature_ ?? transaction
+  if (typeof signature.r === 'undefined') return []
+  if (typeof signature.s === 'undefined') return []
+
+  const r = trim(signature.r)
+  const s = trim(signature.s)
+
+  const v = (() => {
+    if (typeof signature.yParity === 'number') return BigInt(signature.yParity)
+    if (typeof signature.v === 'bigint') {
+      if (signature.v === 27n || signature.v === 28n) return signature.v - 27n
+      return signature.v
+    }
+    return 0n
+  })()
+
+  return [
+    toMinimalQuantityHex(v),
+    r === '0x00' ? '0x' : r,
+    s === '0x00' ? '0x' : s,
+  ]
 }

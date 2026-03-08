@@ -1,18 +1,19 @@
 import { expect, test } from 'vitest'
 
-import { accounts, typedData } from '~test/constants.js'
+import { accounts } from '~test/constants.js'
+import { nativeAccounts, nativeTypedData } from '~test/nativeFixtures.js'
 
 import { signTypedData } from './signTypedData.js'
 
 test('default', async () => {
   expect(
     await signTypedData({
-      ...typedData.basic,
+      ...nativeTypedData.basic,
       primaryType: 'Mail',
       privateKey: accounts[0].privateKey,
     }),
   ).toMatchInlineSnapshot(
-    '"0x32f3d5975ba38d6c2fba9b95d5cbed1febaa68003d3d588d51f2de522ad54117760cfc249470a75232552e43991f53953a3d74edf6944553c6bef2469bb9e5921b"',
+    `"0x35c65cdb26d85929ba5aa38c680dd1c038d7351a7ad6a3aee8f1a68606bbcffc3c49937ea645d94705afa42f5000f32cc6b76b6ddeee1762bc0230ce5c2927591b"`,
   )
 })
 
@@ -34,43 +35,43 @@ test('minimal', async () => {
 test('complex', async () => {
   expect(
     await signTypedData({
-      ...typedData.complex,
+      ...nativeTypedData.complex,
       primaryType: 'Mail',
       privateKey: accounts[0].privateKey,
     }),
   ).toEqual(
-    '0xc4d8bcda762d35ea79d9542b23200f46c2c1899db15bf929bbacaf609581db0831538374a01206517edd934e474212a0f1e2d62e9a01cd64f1cf94ea2e0988491c',
+    '0xbb2e80e39e2442cd7d986eb9fb962f3fff206650085cded07227692f0fb904996172dbc8d5007e4eb2c1781886f91a0cedf839aae4dab6667739df188d7c682f1c',
   )
 })
 
 test('domain: empty', async () => {
   expect(
     await signTypedData({
-      ...typedData.complex,
+      ...nativeTypedData.complex,
       domain: undefined,
       primaryType: 'Mail',
       privateKey: accounts[0].privateKey,
     }),
   ).toMatchInlineSnapshot(
-    '"0x47d36c0110609e0c61169b221edfcd988455a67a0af965285c9c32bcc5df791f180b8e9a539e6a12e7af164f1de5879b09e4c1ef3032980bc7aea167198255eb1c"',
+    `"0x99dab0404b95294a37b55cdea1703eb70604550d29d2d568ed4146bd15dd7306488bb7271a492cb8ea8757f9078875030ea8ae5118ce31b80f80369f2922dcae1b"`,
   )
 
   expect(
     await signTypedData({
-      ...typedData.complex,
+      ...nativeTypedData.complex,
       domain: {},
       primaryType: 'Mail',
       privateKey: accounts[0].privateKey,
     }),
   ).toMatchInlineSnapshot(
-    '"0x47d36c0110609e0c61169b221edfcd988455a67a0af965285c9c32bcc5df791f180b8e9a539e6a12e7af164f1de5879b09e4c1ef3032980bc7aea167198255eb1c"',
+    `"0x99dab0404b95294a37b55cdea1703eb70604550d29d2d568ed4146bd15dd7306488bb7271a492cb8ea8757f9078875030ea8ae5118ce31b80f80369f2922dcae1b"`,
   )
 })
 
 test('domain: chainId', async () => {
   expect(
     await signTypedData({
-      ...typedData.complex,
+      ...nativeTypedData.complex,
       domain: {
         chainId: 1,
       },
@@ -78,14 +79,14 @@ test('domain: chainId', async () => {
       privateKey: accounts[0].privateKey,
     }),
   ).toMatchInlineSnapshot(
-    '"0x6e100a352ec6ad1b70802290e18aeed190704973570f3b8ed42cb9808e2ea6bf4a90a229a244495b41890987806fcbd2d5d23fc0dbe5f5256c2613c039d76db81c"',
+    `"0x8154b074c0d19ada2106f20ebb50e83bab1f196568f8d4852ba358684ac0fff233a2f271e09337d032de1be4291835569fc6653bebec26144e2f64ba69423d0a1b"`,
   )
 })
 
 test('domain: name', async () => {
   expect(
     await signTypedData({
-      ...typedData.complex,
+      ...nativeTypedData.complex,
       domain: {
         name: 'Ether!',
       },
@@ -93,29 +94,29 @@ test('domain: name', async () => {
       privateKey: accounts[0].privateKey,
     }),
   ).toMatchInlineSnapshot(
-    '"0xb2b9704a23b0e5a5e728623113ab57e93a9de055b53c15d5d0f1a6485932efc503d77c0cfc2eca82cd9b4ecd2b39355457e4dd390ccb6d5c4457a2631b53baa21b"',
+    `"0xa479d603402979de41672fa533a0e5a017fb97f44b0c5c96aaaf3fd4f52eb2492c22aa1d9b6002859d64f4c261a60dbf19d38c30cac88ac894207da3c2b5a5d41b"`,
   )
 })
 
 test('domain: verifyingContract', async () => {
   expect(
     await signTypedData({
-      ...typedData.complex,
+      ...nativeTypedData.complex,
       domain: {
-        verifyingContract: '0xCcCCccccCCCCcCCCCCCcCcCccCcCCCcCcccccccC',
+        verifyingContract: nativeAccounts[3]!.address,
       },
       primaryType: 'Mail',
       privateKey: accounts[0].privateKey,
     }),
   ).toMatchInlineSnapshot(
-    '"0xa74d8aa1ff14231fedeaf7a929e86ac55d80256bee24e1f8ebba9bd092a9351651b6669da7f5d0a7209243f8dee1026b018ed03dd5ce01b7ecb75a8880deeeb01b"',
+    `"0x0788381870bd65a038b5f24a5f05016c6ba77d3026b4739ce6d5805d96ca5dae07c662c11bd653fc971c8e8cc1870482f226f6f88f177fafca9dcca9bc0dab001b"`,
   )
 })
 
 test('domain: salt', async () => {
   expect(
     await signTypedData({
-      ...typedData.complex,
+      ...nativeTypedData.complex,
       domain: {
         salt: '0x123512315aaaa1231313b1231b23b13b123aa12312211b1b1b111bbbb1affafa',
       },
@@ -123,6 +124,6 @@ test('domain: salt', async () => {
       privateKey: accounts[0].privateKey,
     }),
   ).toMatchInlineSnapshot(
-    '"0x4b193383278fd3dcaa084952ea282cb9c8889c26c6caaa3f48aca7bde78c6e72028bd98c0328e40d067dbbab53733f99f241d8cf91a32580883f65264c2b72581b"',
+    `"0x6b34d4bda17c3d263028e01a44af60656472273bf49834fd4c76c6eac84452954bbe862c6d033d5cddc4de218932b5f25c31ad6d26ef7adb10226c6536640a2b1b"`,
   )
 })

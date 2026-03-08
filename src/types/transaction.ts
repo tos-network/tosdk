@@ -28,6 +28,7 @@ export type AccessList = readonly {
 }[]
 
 export type TransactionType =
+  | 'native'
   | 'legacy'
   | 'eip1559'
   | 'eip2930'
@@ -286,7 +287,18 @@ export type TransactionRequestEIP7702<
     authorizationList?: AuthorizationList<index, boolean> | undefined
   }
 
+export type TransactionRequestNative<
+  quantity = bigint,
+  index = number,
+  type = 'native',
+> = RequiredBy<TransactionRequestBase<quantity, index, type>, 'from'> & {
+  accessList?: AccessList | undefined
+  chainId: index
+  signerType: string
+}
+
 export type TransactionRequest<quantity = bigint, index = number> = OneOf<
+  | TransactionRequestNative<quantity, index>
   | TransactionRequestLegacy<quantity, index>
   | TransactionRequestEIP2930<quantity, index>
   | TransactionRequestEIP1559<quantity, index>
@@ -316,11 +328,13 @@ export type TransactionSerializedEIP1559 = `0x02${string}`
 export type TransactionSerializedEIP2930 = `0x01${string}`
 export type TransactionSerializedEIP4844 = `0x03${string}`
 export type TransactionSerializedEIP7702 = `0x04${string}`
+export type TransactionSerializedNative = `0x00${string}`
 export type TransactionSerializedLegacy = Branded<`0x${string}`, 'legacy'>
 export type TransactionSerializedGeneric = `0x${string}`
 export type TransactionSerialized<
   type extends TransactionType = TransactionType,
   result =
+    | (type extends 'native' ? TransactionSerializedNative : never)
     | (type extends 'eip1559' ? TransactionSerializedEIP1559 : never)
     | (type extends 'eip2930' ? TransactionSerializedEIP2930 : never)
     | (type extends 'eip4844' ? TransactionSerializedEIP4844 : never)
@@ -403,7 +417,19 @@ export type TransactionSerializableEIP7702<
     yParity?: number | undefined
   }
 
+export type TransactionSerializableNative<
+  quantity = bigint,
+  index = number,
+> = Omit<TransactionSerializableBase<quantity, index>, 'type'> & {
+  accessList?: AccessList | undefined
+  chainId: number
+  from: Address
+  signerType: string
+  type?: 'native' | undefined
+}
+
 export type TransactionSerializable<quantity = bigint, index = number> = OneOf<
+  | TransactionSerializableNative<quantity, index>
   | TransactionSerializableLegacy<quantity, index>
   | TransactionSerializableEIP2930<quantity, index>
   | TransactionSerializableEIP1559<quantity, index>

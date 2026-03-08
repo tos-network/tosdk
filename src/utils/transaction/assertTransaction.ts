@@ -25,6 +25,7 @@ import {
 } from '../../errors/node.js'
 import type { ErrorType } from '../../errors/utils.js'
 import type {
+  TransactionSerializableNative,
   TransactionSerializableEIP1559,
   TransactionSerializableEIP2930,
   TransactionSerializableEIP4844,
@@ -37,6 +38,7 @@ import { slice } from '../data/slice.js'
 import { hexToNumber } from '../encoding/fromHex.js'
 
 export type AssertTransactionEIP7702ErrorType =
+  | AssertTransactionNativeErrorType
   | AssertTransactionEIP1559ErrorType
   | InvalidAddressErrorType
   | InvalidChainIdErrorType
@@ -55,6 +57,24 @@ export function assertTransactionEIP7702(
     }
   }
   assertTransactionEIP1559(transaction as {} as TransactionSerializableEIP1559)
+}
+
+export type AssertTransactionNativeErrorType =
+  | BaseErrorType
+  | IsAddressErrorType
+  | InvalidAddressErrorType
+  | InvalidChainIdErrorType
+  | ErrorType
+
+export function assertTransactionNative(
+  transaction: TransactionSerializableNative,
+) {
+  const { chainId, from, signerType, to } = transaction
+  if (chainId <= 0) throw new InvalidChainIdError({ chainId })
+  if (!signerType.trim())
+    throw new BaseError('`signerType` is required for native transactions.')
+  if (!isAddress(from)) throw new InvalidAddressError({ address: from })
+  if (to && !isAddress(to)) throw new InvalidAddressError({ address: to })
 }
 
 export type AssertTransactionEIP4844ErrorType =

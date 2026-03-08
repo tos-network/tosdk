@@ -2,10 +2,9 @@ import { HDKey } from '@scure/bip32'
 
 import { describe, expect, test } from 'vitest'
 
-import { accounts, typedData } from '~test/constants.js'
+import { accounts } from '~test/constants.js'
+import { nativeAccounts, nativeTypedData } from '~test/nativeFixtures.js'
 import { toBytes } from '../utils/encoding/toBytes.js'
-import { parseEther } from '../utils/unit/parseEther.js'
-import { parseGwei } from '../utils/unit/parseGwei.js'
 
 import { hdKeyToAccount } from './hdKeyToAccount.js'
 import { privateKeyToAddress } from './utils/privateKeyToAddress.js'
@@ -89,27 +88,32 @@ test('sign message', async () => {
   )
 })
 
-test.skip('sign transaction', async () => {
+test('sign transaction', async () => {
   const account = hdKeyToAccount(hdKey)
   expect(
     await account.signTransaction({
-      chainId: 1,
-      maxFeePerGas: parseGwei('20'),
+      chainId: 1666,
+      from: account.address,
       gas: 21000n,
-      to: accounts[1].address,
-      value: parseEther('1'),
+      signerType: 'secp256k1',
+      to: nativeAccounts[1]!.address,
+      type: 'native',
+      value: 1_000_000_000_000_000_000n,
     }),
   ).toMatchInlineSnapshot(
-    '"0x02f86f0180808504a817c8008252089470997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c001a0f40a2d2ae9638056cafbe9083c7125edc8555e0e715db0984dd859a5c6dfac57a020f36fd0b32bef4d6d75c62f220e59c5fb60c244ca3b361e750985ee5c3a0931"',
+    `"0x00f8a182068280825208a0482845ef5f7df661eb71148970997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0a0c1ffd3cfee2d9e5cd67643f8f39fd6e51aad88f6f4ce6ab8827279cfffb9226689736563703235366b3101a00f7d56c78d0f419f2c4bc48efb2897006f6be93dba62bebb0fb21e05f329eaf7a07c4b6c17f310eedaac9bd75169f33f9421653c64b1396dbaf69c25db528c72ff"`,
   )
 })
 
-test.skip('sign typed data', async () => {
+test('sign typed data', async () => {
   const account = hdKeyToAccount(hdKey)
   expect(
-    await account.signTypedData({ ...typedData.basic, primaryType: 'Mail' }),
+    await account.signTypedData({
+      ...nativeTypedData.basic,
+      primaryType: 'Mail',
+    }),
   ).toMatchInlineSnapshot(
-    '"0x32f3d5975ba38d6c2fba9b95d5cbed1febaa68003d3d588d51f2de522ad54117760cfc249470a75232552e43991f53953a3d74edf6944553c6bef2469bb9e5921b"',
+    `"0x35c65cdb26d85929ba5aa38c680dd1c038d7351a7ad6a3aee8f1a68606bbcffc3c49937ea645d94705afa42f5000f32cc6b76b6ddeee1762bc0230ce5c2927591b"`,
   )
 })
 

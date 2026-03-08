@@ -10,6 +10,7 @@ import type {
 } from '../../index.js'
 import type {
   TransactionRequestGeneric,
+  TransactionSerializableNative,
   TransactionSerializableEIP2930,
   TransactionSerializableEIP4844,
   TransactionSerializableEIP7702,
@@ -22,6 +23,7 @@ export type GetTransactionType<
     TransactionSerializableGeneric | TransactionRequestGeneric
   > = TransactionSerializableGeneric,
   result =
+    | (transaction extends NativeProperties ? 'native' : never)
     | (transaction extends LegacyProperties ? 'legacy' : never)
     | (transaction extends EIP1559Properties ? 'eip1559' : never)
     | (transaction extends EIP2930Properties ? 'eip2930' : never)
@@ -47,6 +49,12 @@ export function getTransactionType<
 >(transaction: transaction): GetTransactionType<transaction> {
   if (transaction.type)
     return transaction.type as GetTransactionType<transaction>
+
+  if (
+    typeof transaction.from !== 'undefined' &&
+    typeof transaction.signerType !== 'undefined'
+  )
+    return 'native' as any
 
   if (typeof transaction.authorizationList !== 'undefined')
     return 'eip7702' as any
@@ -82,13 +90,24 @@ type BaseProperties = {
   authorizationList?: undefined
   blobs?: undefined
   blobVersionedHashes?: undefined
+  from?: undefined
   gasPrice?: undefined
   maxFeePerBlobGas?: undefined
   maxFeePerGas?: undefined
   maxPriorityFeePerGas?: undefined
+  signerType?: undefined
   sidecars?: undefined
 }
 
+type NativeProperties = Assign<
+  BaseProperties,
+  {
+    chainId: number
+    from: TransactionSerializableNative['from']
+    signerType: TransactionSerializableNative['signerType']
+    accessList?: TransactionSerializableNative['accessList'] | undefined
+  }
+>
 type LegacyProperties = Assign<BaseProperties, FeeValuesLegacy>
 type EIP1559Properties = Assign<
   BaseProperties,

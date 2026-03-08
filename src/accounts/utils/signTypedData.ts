@@ -24,7 +24,7 @@ export type SignTypedDataErrorType =
   | ErrorType
 
 /**
- * @description Signs typed data and calculates an Ethereum-specific signature in [https://eips.ethereum.org/EIPS/eip-712](https://eips.ethereum.org/EIPS/eip-712):
+ * @description Signs typed data using the canonical typed-data digest:
  * `sign(keccak256("\x19\x01" ‖ domainSeparator ‖ hashStruct(message)))`.
  *
  * @returns The signature.
