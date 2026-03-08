@@ -3,12 +3,15 @@ import { describe, expect, test } from 'vitest'
 import { accounts } from '~test/constants.js'
 
 import { toAccount } from './toAccount.js'
+import { privateKeyToAddress } from './utils/privateKeyToAddress.js'
+
+const address = privateKeyToAddress(accounts[0].privateKey)
 
 describe('toAccount', () => {
   test('json-rpc account', () => {
-    expect(toAccount(accounts[0].address)).toMatchInlineSnapshot(`
+    expect(toAccount(address)).toMatchInlineSnapshot(`
       {
-        "address": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+        "address": "0xc1ffd3cfee2d9e5cd67643f8f39fd6e51aad88f6f4ce6ab8827279cfffb92266",
         "type": "json-rpc",
       }
     `)
@@ -18,8 +21,8 @@ describe('toAccount', () => {
     expect(() => toAccount('0x1')).toThrowErrorMatchingInlineSnapshot(`
       [InvalidAddressError: Address "0x1" is invalid.
 
-      - Address must be a hex value of 20 bytes (40 hex characters).
-      - Address must match its checksum counterpart.
+      - Address must be a hex value of 32 bytes (64 hex characters).
+      - Address must start with 0x and contain only hexadecimal characters.
 
       Version: viem@x.y.z]
     `)
@@ -28,7 +31,7 @@ describe('toAccount', () => {
   test('local account', () => {
     expect(
       toAccount({
-        address: accounts[0].address,
+        address,
         async signMessage() {
           return '0x'
         },
@@ -41,7 +44,7 @@ describe('toAccount', () => {
       }),
     ).toMatchInlineSnapshot(`
       {
-        "address": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+        "address": "0xc1ffd3cfee2d9e5cd67643f8f39fd6e51aad88f6f4ce6ab8827279cfffb92266",
         "nonceManager": undefined,
         "sign": undefined,
         "signAuthorization": undefined,
@@ -71,8 +74,8 @@ describe('toAccount', () => {
     ).toThrowErrorMatchingInlineSnapshot(`
       [InvalidAddressError: Address "0x1" is invalid.
 
-      - Address must be a hex value of 20 bytes (40 hex characters).
-      - Address must match its checksum counterpart.
+      - Address must be a hex value of 32 bytes (64 hex characters).
+      - Address must start with 0x and contain only hexadecimal characters.
 
       Version: viem@x.y.z]
     `)

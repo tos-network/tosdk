@@ -1,9 +1,8 @@
 import type { Address } from 'abitype'
 import type { ErrorType } from '../../errors/utils.js'
 import { LruMap } from '../lru.js'
-import { checksumAddress } from './getAddress.js'
 
-const addressRegex = /^0x[a-fA-F0-9]{40}$/
+const addressRegex = /^0x[a-fA-F0-9]{64}$/
 
 /** @internal */
 export const isAddressCache = /*#__PURE__*/ new LruMap<boolean>(8192)
@@ -31,7 +30,7 @@ export function isAddress(
   const result = (() => {
     if (!addressRegex.test(address)) return false
     if (address.toLowerCase() === address) return true
-    if (strict) return checksumAddress(address as Address) === address
+    if (strict) return address === address.toLowerCase()
     return true
   })()
   isAddressCache.set(cacheKey, result)

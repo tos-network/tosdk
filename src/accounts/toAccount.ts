@@ -1,7 +1,5 @@
 // TODO(v3): Rename to `toLocalAccount` + add `source` property to define source (privateKey, mnemonic, hdKey, etc).
 
-import type { Address } from 'abitype'
-
 import {
   InvalidAddressError,
   type InvalidAddressErrorType,
@@ -19,7 +17,7 @@ import type {
 } from './types.js'
 
 type GetAccountReturnType<accountSource extends AccountSource> =
-  | (accountSource extends Address ? JsonRpcAccount : never)
+  | (accountSource extends string ? JsonRpcAccount : never)
   | (accountSource extends CustomSource ? LocalAccount : never)
 
 export type ToAccountErrorType =

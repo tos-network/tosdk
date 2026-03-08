@@ -38,7 +38,7 @@ export type PrivateKeyToAccountErrorType =
 /**
  * @description Creates an Account from a private key.
  *
- * @returns A Private Key Account.
+ * @returns A Private Key Account with a 32-byte native address.
  */
 export function privateKeyToAccount(
   privateKey: Hex,
