@@ -3,6 +3,10 @@ export type { Address } from './types/address.js'
 export type { Chain } from './types/chain.js'
 export type { Hex, Signature } from './types/misc.js'
 export type {
+  SettlementKind,
+  SettlementReceipt,
+} from './types/settlement.js'
+export type {
   BlockTag,
   FeeHistory,
   HttpTransportConfig,
@@ -12,13 +16,18 @@ export type {
   PublicClientConfig,
   RpcBlock,
   RpcLog,
+  RpcSubscription,
   RpcTransport,
   RpcTransaction,
   RpcTransactionReceipt,
   RpcTransactionRequest,
   SendSystemActionParameters,
   SignTransactionParameters,
+  SubscriptionTransport,
+  TransportConfig,
   WaitForTransactionReceiptParameters,
+  WebSocketLike,
+  WebSocketTransportConfig,
   WalletClient,
   WalletClientConfig,
 } from './types/client.js'
@@ -29,7 +38,13 @@ export {
   encodeSystemActionData,
   systemActionAddress,
 } from './clients/index.js'
-export { http, createHttpTransport } from './transports/index.js'
+export {
+  http,
+  createHttpTransport,
+  webSocket,
+  createTransport,
+  createWebSocketTransport,
+} from './transports/index.js'
 export { toBytes, type ToBytesErrorType } from './utils/encoding/toBytes.js'
 export {
   toHex,
@@ -43,6 +58,12 @@ export {
   keccak256,
   type Keccak256ErrorType,
 } from './utils/hash/keccak256.js'
+export {
+  canonicalizeSettlementReceipt,
+  canonicalizeSettlementValue,
+  hashSettlementReceipt,
+  hashSettlementValue,
+} from './utils/settlement.js'
 export {
   verifyMessage,
   type VerifyMessageErrorType,

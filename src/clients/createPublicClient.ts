@@ -11,34 +11,61 @@ import type {
   PublicClientConfig,
   RpcBlock,
   RpcLog,
+  RpcSubscription,
   RpcTransaction,
   RpcTransactionReceipt,
   RpcTransactionRequest,
+  SubscriptionTransport,
   WaitForTransactionReceiptParameters,
 } from '../types/client.js'
 import type { Hex } from '../types/misc.js'
 import { type NumberToHexErrorType, numberToHex } from '../utils/encoding/toHex.js'
-import { createHttpTransport, http } from '../transports/http.js'
+import { createTransport, http } from '../transports/index.js'
 import { getAddress, type GetAddressErrorType } from '../utils/address/getAddress.js'
 import {
   InvalidLogFilterError,
   type InvalidLogFilterErrorType,
+  SubscriptionsUnsupportedError,
+  type SubscriptionsUnsupportedErrorType,
 } from '../errors/client.js'
 
 export type CreatePublicClientErrorType =
   | GetAddressErrorType
   | InvalidLogFilterErrorType
   | NumberToHexErrorType
+  | SubscriptionsUnsupportedErrorType
   | TransactionReceiptTimeoutErrorType
   | ErrorType
 
 export function createPublicClient(
   config: PublicClientConfig = {},
 ): PublicClient {
-  const transport = createHttpTransport(config.transport ?? http(), config.chain)
+  const transport = createTransport(config.transport ?? http(), config.chain)
 
   const request = <T>(method: string, params: readonly unknown[] = []) =>
     transport.request<T>(method, params)
+
+  const subscribe = <T>({
+    event,
+    onData,
+    onError,
+    params = [],
+  }: {
+    event: string
+    onData(data: T): void
+    onError?(error: Error): void
+    params?: readonly unknown[] | undefined
+  }): Promise<RpcSubscription> => {
+    if (!('subscribe' in transport) || typeof transport.subscribe !== 'function') {
+      throw new SubscriptionsUnsupportedError()
+    }
+    return (transport as SubscriptionTransport).subscribe<T>({
+      event,
+      onData,
+      params,
+      ...(onError ? { onError } : {}),
+    })
+  }
 
   return {
     chain: config.chain,
@@ -71,6 +98,12 @@ export function createPublicClient(
     },
     async getTransactionByHash({ hash }) {
       return request<RpcTransaction | null>('tos_getTransactionByHash', [hash])
+    },
+    async getBlockByHash({ hash, includeTransactions = false }) {
+      return request<RpcBlock | null>('tos_getBlockByHash', [
+        hash,
+        includeTransactions,
+      ])
     },
     async getBlockByNumber({
       blockNumber = 'latest',
@@ -131,6 +164,21 @@ export function createPublicClient(
         rewardPercentiles,
       ])
       return parseFeeHistory(response)
+    },
+    async watchBlocks({ onBlock, onError }) {
+      return subscribe<RpcBlock>({
+        event: 'newHeads',
+        onData: onBlock,
+        ...(onError ? { onError } : {}),
+      })
+    },
+    async watchLogs({ filter, onLog, onError }) {
+      return subscribe<RpcLog>({
+        event: 'logs',
+        params: filter ? [serializeLogFilter(filter)] : [],
+        onData: onLog,
+        ...(onError ? { onError } : {}),
+      })
     },
     async waitForTransactionReceipt({
       hash,

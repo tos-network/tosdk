@@ -104,6 +104,28 @@ export type HttpTransportConfig = {
   headers?: HeadersInit | undefined
 }
 
+export type WebSocketLike = {
+  readyState: number
+  addEventListener(
+    type: 'close' | 'error' | 'message' | 'open',
+    listener: (event: any) => void,
+  ): void
+  removeEventListener(
+    type: 'close' | 'error' | 'message' | 'open',
+    listener: (event: any) => void,
+  ): void
+  send(data: string): void
+  close(code?: number, reason?: string): void
+}
+
+export type WebSocketTransportConfig = {
+  type: 'webSocket'
+  url?: string | undefined
+  webSocketFactory?: ((url: string) => WebSocketLike) | undefined
+}
+
+export type TransportConfig = HttpTransportConfig | WebSocketTransportConfig
+
 export type RpcTransport = {
   key: string
   name: string
@@ -111,9 +133,24 @@ export type RpcTransport = {
   request<T>(method: string, params?: readonly unknown[]): Promise<T>
 }
 
+export type RpcSubscription = {
+  id: string
+  unsubscribe(): Promise<void>
+}
+
+export type SubscriptionTransport = RpcTransport & {
+  subscribe<T>(parameters: {
+    namespace?: string | undefined
+    event: string
+    params?: readonly unknown[] | undefined
+    onData(data: T): void
+    onError?(error: Error): void
+  }): Promise<RpcSubscription>
+}
+
 export type PublicClientConfig = {
   chain?: Chain | undefined
-  transport?: HttpTransportConfig | undefined
+  transport?: TransportConfig | undefined
 }
 
 export type WaitForTransactionReceiptParameters = {
@@ -142,6 +179,10 @@ export type PublicClient = {
   getTransactionByHash(parameters: {
     hash: Hex
   }): Promise<RpcTransaction | null>
+  getBlockByHash(parameters: {
+    hash: Hex
+    includeTransactions?: boolean | undefined
+  }): Promise<RpcBlock | null>
   getBlockByNumber(parameters?: {
     blockNumber?: BlockTag | number | bigint | undefined
     includeTransactions?: boolean | undefined
@@ -169,6 +210,15 @@ export type PublicClient = {
     lastBlock?: BlockTag | number | bigint | undefined
     rewardPercentiles?: readonly number[] | undefined
   }): Promise<FeeHistory>
+  watchBlocks(parameters: {
+    onBlock(block: RpcBlock): void
+    onError?(error: Error): void
+  }): Promise<RpcSubscription>
+  watchLogs(parameters: {
+    filter?: LogFilter | undefined
+    onLog(log: RpcLog): void
+    onError?(error: Error): void
+  }): Promise<RpcSubscription>
   waitForTransactionReceipt(
     parameters: WaitForTransactionReceiptParameters,
   ): Promise<RpcTransactionReceipt>

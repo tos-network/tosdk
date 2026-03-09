@@ -103,3 +103,46 @@ export class InvalidLogFilterError extends BaseError {
     })
   }
 }
+
+export type SubscriptionsUnsupportedErrorType =
+  SubscriptionsUnsupportedError & {
+    name: 'SubscriptionsUnsupportedError'
+  }
+
+export class SubscriptionsUnsupportedError extends BaseError {
+  constructor() {
+    super('The configured transport does not support subscriptions.', {
+      metaMessages: [
+        'Use a WebSocket transport to call watchBlocks or watchLogs.',
+      ],
+      name: 'SubscriptionsUnsupportedError',
+    })
+  }
+}
+
+export type WebSocketUnavailableErrorType = WebSocketUnavailableError & {
+  name: 'WebSocketUnavailableError'
+}
+
+export class WebSocketUnavailableError extends BaseError {
+  constructor() {
+    super('No WebSocket implementation is available in this runtime.', {
+      metaMessages: [
+        'Pass a custom `webSocketFactory` or use a runtime with global WebSocket support.',
+      ],
+      name: 'WebSocketUnavailableError',
+    })
+  }
+}
+
+export type RpcConnectionClosedErrorType = RpcConnectionClosedError & {
+  name: 'RpcConnectionClosedError'
+}
+
+export class RpcConnectionClosedError extends BaseError {
+  constructor() {
+    super('The RPC connection was closed.', {
+      name: 'RpcConnectionClosedError',
+    })
+  }
+}

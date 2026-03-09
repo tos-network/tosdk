@@ -7,7 +7,9 @@ import {
   http,
   systemActionAddress,
   toHex,
+  webSocket,
 } from 'tosdk'
+import type { RpcBlock, RpcLog } from 'tosdk'
 import { privateKeyToAccount } from 'tosdk/accounts'
 import { tosTestnet } from 'tosdk/chains'
 
@@ -19,6 +21,65 @@ type RpcRequestPayload = {
   jsonrpc: '2.0'
   method: string
   params: readonly unknown[]
+}
+
+class FakeWebSocket {
+  readyState = 0
+  sent: RpcRequestPayload[] = []
+  private listeners = new Map<string, Set<(event: any) => void>>()
+
+  constructor(readonly url: string) {}
+
+  addEventListener(type: string, listener: (event: any) => void) {
+    const listeners = this.listeners.get(type) ?? new Set()
+    listeners.add(listener)
+    this.listeners.set(type, listeners)
+  }
+
+  removeEventListener(type: string, listener: (event: any) => void) {
+    this.listeners.get(type)?.delete(listener)
+  }
+
+  send(data: string) {
+    this.sent.push(JSON.parse(data) as RpcRequestPayload)
+  }
+
+  close() {
+    this.readyState = 3
+    this.emit('close', {})
+  }
+
+  open() {
+    this.readyState = 1
+    this.emit('open', {})
+  }
+
+  emitResult(id: number, result: unknown) {
+    this.emit('message', {
+      data: JSON.stringify({
+        id,
+        jsonrpc: '2.0',
+        result,
+      }),
+    })
+  }
+
+  emitSubscription(subscription: string, result: unknown) {
+    this.emit('message', {
+      data: JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'tos_subscription',
+        params: {
+          subscription,
+          result,
+        },
+      }),
+    })
+  }
+
+  private emit(type: string, event: unknown) {
+    for (const listener of this.listeners.get(type) ?? []) listener(event)
+  }
 }
 
 function createJsonRpcFetch(
@@ -49,6 +110,10 @@ function createJsonRpcFetch(
   })
 
   return { calls, fetchFn }
+}
+
+function flushAsync() {
+  return new Promise((resolve) => setTimeout(resolve, 0))
 }
 
 test('public client uses the chain default RPC URL and returns native quantities', async () => {
@@ -387,4 +452,106 @@ test('getLogs rejects blockHash mixed with block range parameters', async () => 
   ).rejects.toMatchObject({
     name: 'InvalidLogFilterError',
   })
+})
+
+test('webSocket transport supports RPC requests and subscriptions', async () => {
+  let socket!: FakeWebSocket
+  const client = createPublicClient({
+    chain: tosTestnet,
+    transport: webSocket(undefined, {
+      webSocketFactory: (url) => {
+        socket = new FakeWebSocket(url)
+        queueMicrotask(() => socket.open())
+        return socket
+      },
+    }),
+  })
+
+  const blockPromise = client.getBlockByHash({ hash: '0xbeef' })
+  await flushAsync()
+  expect(socket.url).toBe(
+    `wss://${tosTestnet.rpcUrls.default.http[0]!.slice('https://'.length)}`,
+  )
+  expect(socket.sent[0]).toMatchObject({
+    method: 'tos_getBlockByHash',
+    params: ['0xbeef', false],
+  })
+  socket.emitResult(socket.sent[0]!.id, {
+    hash: '0xbeef',
+    number: toHex(7n),
+    transactions: [],
+  })
+  await expect(blockPromise).resolves.toMatchObject({ hash: '0xbeef' })
+
+  const seenBlocks: RpcBlock[] = []
+  const blockSubPromise = client.watchBlocks({
+    onBlock: (block) => seenBlocks.push(block),
+  })
+  await flushAsync()
+  expect(socket.sent[1]).toMatchObject({
+    method: 'tos_subscribe',
+    params: ['newHeads'],
+  })
+  socket.emitResult(socket.sent[1]!.id, '0xsub-blocks')
+  const blockSub = await blockSubPromise
+  socket.emitSubscription('0xsub-blocks', {
+    number: toHex(8n),
+    hash: '0xcafe',
+    transactions: [],
+  })
+  expect(seenBlocks).toEqual([{ hash: '0xcafe', number: '0x8', transactions: [] }])
+
+  const seenLogs: RpcLog[] = []
+  const logSubPromise = client.watchLogs({
+    filter: {
+      address: nativeAccounts[1]!.address,
+      topics: ['0x1111'],
+    },
+    onLog: (log) => seenLogs.push(log),
+  })
+  await flushAsync()
+  expect(socket.sent[2]).toMatchObject({
+    method: 'tos_subscribe',
+    params: [
+      'logs',
+      {
+        address: nativeAccounts[1]!.address,
+        fromBlock: '0x0',
+        toBlock: 'latest',
+        topics: ['0x1111'],
+      },
+    ],
+  })
+  socket.emitResult(socket.sent[2]!.id, '0xsub-logs')
+  const logSub = await logSubPromise
+  socket.emitSubscription('0xsub-logs', {
+    address: nativeAccounts[1]!.address,
+    data: '0xdeadbeef',
+    topics: ['0x1111'],
+  })
+  expect(seenLogs).toEqual([
+    {
+      address: nativeAccounts[1]!.address,
+      data: '0xdeadbeef',
+      topics: ['0x1111'],
+    },
+  ])
+
+  const unsubscribeBlockPromise = blockSub.unsubscribe()
+  await flushAsync()
+  expect(socket.sent[3]).toMatchObject({
+    method: 'tos_unsubscribe',
+    params: ['0xsub-blocks'],
+  })
+  socket.emitResult(socket.sent[3]!.id, true)
+  await unsubscribeBlockPromise
+
+  const unsubscribeLogPromise = logSub.unsubscribe()
+  await flushAsync()
+  expect(socket.sent[4]).toMatchObject({
+    method: 'tos_unsubscribe',
+    params: ['0xsub-logs'],
+  })
+  socket.emitResult(socket.sent[4]!.id, true)
+  await unsubscribeLogPromise
 })
