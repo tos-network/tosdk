@@ -8,9 +8,11 @@ export default defineConfig({
       { find: /^tosdk$/, replacement: join(__dirname, '../src/index.ts') },
       { find: /^tosdk\/accounts$/, replacement: join(__dirname, '../src/accounts/index.ts') },
       { find: /^tosdk\/chains$/, replacement: join(__dirname, '../src/chains/index.ts') },
+      { find: /^tosdk\/clients$/, replacement: join(__dirname, '../src/clients/index.ts') },
+      { find: /^tosdk\/transports$/, replacement: join(__dirname, '../src/transports/index.ts') },
     ],
     include: ['test/**/*.test.ts'],
-    exclude: ['**/node_modules/**', '**/_esm/**', '**/_cjs/**', '**/_types/**'],
+    exclude: ['**/node_modules/**', '**/dist/**'],
     retry: 0,
   },
 })

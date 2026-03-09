@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 
-import { keccak256, parseUnits, toBytes, toHex } from 'tosdk'
+import { defineChain, keccak256, parseUnits, toBytes, toHex } from 'tosdk'
 import { tos, tosTestnet } from 'tosdk/chains'
 
 test('toHex and toBytes encode basic values', () => {
@@ -25,4 +25,25 @@ test('chains export native TOS definitions', () => {
   expect(tos.testnet).toBe(false)
   expect(tosTestnet.name).toBe('TOS Testnet')
   expect(tosTestnet.testnet).toBe(true)
+})
+
+test('defineChain creates custom native chain definitions', () => {
+  const local = defineChain({
+    id: 70000,
+    name: 'Local TOS',
+    nativeCurrency: {
+      decimals: 18,
+      name: 'TOS',
+      symbol: 'TOS',
+    },
+    rpcUrls: {
+      default: {
+        http: ['http://127.0.0.1:8545'],
+      },
+    },
+    testnet: true,
+  })
+
+  expect(local.id).toBe(70000)
+  expect(local.rpcUrls.default.http[0]).toBe('http://127.0.0.1:8545')
 })

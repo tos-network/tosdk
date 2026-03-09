@@ -1,20 +1,19 @@
 {
   // This file is used to compile the for cjs and esm (see package.json build scripts). It should exclude all test files.
   "extends": "./tsconfig.base.json",
-  "files": [
-    "src/index.ts",
-    "src/accounts/index.ts",
-    "src/chains/index.ts"
+  "include": [
+    "src/**/*.ts"
   ],
   "exclude": [
     "src/**/*.bench.ts",
     "src/**/*.bench-d.ts",
     "src/**/*.test.ts",
     "src/**/*.test-d.ts",
-    "src/node/trustedSetups_esm.ts"
+    "dist/**"
   ],
   "compilerOptions": {
     "sourceMap": true,
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "tsBuildInfoFile": "./tsconfig.build.tsbuildinfo"
   }
 }
