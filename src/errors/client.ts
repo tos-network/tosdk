@@ -88,3 +88,18 @@ export class TransactionReceiptTimeoutError extends BaseError {
     this.hash = hash
   }
 }
+
+export type InvalidLogFilterErrorType = InvalidLogFilterError & {
+  name: 'InvalidLogFilterError'
+}
+
+export class InvalidLogFilterError extends BaseError {
+  constructor() {
+    super('Invalid log filter parameters.', {
+      metaMessages: [
+        'Do not specify `blockHash` together with `fromBlock` or `toBlock`.',
+      ],
+      name: 'InvalidLogFilterError',
+    })
+  }
+}

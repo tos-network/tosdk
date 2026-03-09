@@ -4,11 +4,16 @@ export type { Chain } from './types/chain.js'
 export type { Hex, Signature } from './types/misc.js'
 export type {
   BlockTag,
+  FeeHistory,
   HttpTransportConfig,
+  LogFilter,
+  LogFilterTopics,
   PublicClient,
   PublicClientConfig,
   RpcBlock,
+  RpcLog,
   RpcTransport,
+  RpcTransaction,
   RpcTransactionReceipt,
   RpcTransactionRequest,
   SendSystemActionParameters,

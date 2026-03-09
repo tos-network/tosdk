@@ -5,9 +5,13 @@ import {
 } from '../errors/client.js'
 import type {
   BlockTag,
+  FeeHistory,
+  LogFilter,
   PublicClient,
   PublicClientConfig,
   RpcBlock,
+  RpcLog,
+  RpcTransaction,
   RpcTransactionReceipt,
   RpcTransactionRequest,
   WaitForTransactionReceiptParameters,
@@ -16,9 +20,14 @@ import type { Hex } from '../types/misc.js'
 import { type NumberToHexErrorType, numberToHex } from '../utils/encoding/toHex.js'
 import { createHttpTransport, http } from '../transports/http.js'
 import { getAddress, type GetAddressErrorType } from '../utils/address/getAddress.js'
+import {
+  InvalidLogFilterError,
+  type InvalidLogFilterErrorType,
+} from '../errors/client.js'
 
 export type CreatePublicClientErrorType =
   | GetAddressErrorType
+  | InvalidLogFilterErrorType
   | NumberToHexErrorType
   | TransactionReceiptTimeoutErrorType
   | ErrorType
@@ -60,6 +69,9 @@ export function createPublicClient(
     async getTransactionReceipt({ hash }) {
       return request<RpcTransactionReceipt | null>('tos_getTransactionReceipt', [hash])
     },
+    async getTransactionByHash({ hash }) {
+      return request<RpcTransaction | null>('tos_getTransactionByHash', [hash])
+    },
     async getBlockByNumber({
       blockNumber = 'latest',
       includeTransactions = false,
@@ -69,11 +81,56 @@ export function createPublicClient(
         includeTransactions,
       ])
     },
+    async getCode({ address, blockTag = 'latest' }) {
+      return request<Hex>('tos_getCode', [
+        getAddress(address),
+        normalizeBlockTag(blockTag),
+      ])
+    },
+    async getStorageAt({ address, slot, blockTag = 'latest' }) {
+      return request<Hex>('tos_getStorageAt', [
+        getAddress(address),
+        slot,
+        normalizeBlockTag(blockTag),
+      ])
+    },
+    async getLogs(filter) {
+      return request<readonly RpcLog[]>('tos_getLogs', [
+        serializeLogFilter(filter),
+      ])
+    },
     async call({ request: callRequest, blockTag = 'latest' }) {
       return request<Hex>('tos_call', [
         serializeRpcTransactionRequest(callRequest),
         normalizeBlockTag(blockTag),
       ])
+    },
+    async estimateGas({ request: estimateRequest }) {
+      return parseRpcQuantity(
+        await request<Hex>('tos_estimateGas', [
+          serializeRpcTransactionRequest(estimateRequest),
+        ]),
+      )
+    },
+    async maxPriorityFeePerGas() {
+      return parseRpcQuantity(await request<Hex>('tos_maxPriorityFeePerGas'))
+    },
+    async feeHistory({
+      blockCount,
+      lastBlock = 'latest',
+      rewardPercentiles = [],
+    }) {
+      const response = await request<{
+        oldestBlock: Hex
+        reward?: Hex[][]
+        baseFeePerGas?: Hex[]
+        gasUsedRatio: number[]
+      }>('tos_feeHistory', [
+        numberToHex(blockCount),
+        normalizeBlockTag(lastBlock),
+        rewardPercentiles,
+      ])
+      return parseFeeHistory(response)
     },
     async waitForTransactionReceipt({
       hash,
@@ -117,5 +174,56 @@ function serializeRpcTransactionRequest(
     ...request,
     ...(request.from ? { from: getAddress(request.from) } : {}),
     to: getAddress(request.to),
+  }
+}
+
+function serializeLogFilter(filter: LogFilter) {
+  if (filter.blockHash && (filter.fromBlock || filter.toBlock)) {
+    throw new InvalidLogFilterError()
+  }
+
+  const address = filter.address
+
+  return {
+    ...(address
+      ? {
+          address: Array.isArray(address)
+            ? address.map((item) => getAddress(item))
+            : getAddress(address as Hex),
+        }
+      : {}),
+    ...(filter.topics ? { topics: filter.topics } : {}),
+    ...(filter.blockHash
+      ? { blockHash: filter.blockHash }
+      : {
+          fromBlock: normalizeBlockTag(filter.fromBlock ?? 0n),
+          toBlock: normalizeBlockTag(filter.toBlock ?? 'latest'),
+        }),
+  }
+}
+
+function parseFeeHistory(response: {
+  oldestBlock: Hex
+  reward?: Hex[][]
+  baseFeePerGas?: Hex[]
+  gasUsedRatio: number[]
+}): FeeHistory {
+  return {
+    oldestBlock: parseRpcQuantity(response.oldestBlock),
+    ...(response.reward
+      ? {
+          reward: response.reward.map((rewardRow) =>
+            rewardRow.map((value) => parseRpcQuantity(value)),
+          ),
+        }
+      : {}),
+    ...(response.baseFeePerGas
+      ? {
+          baseFeePerGas: response.baseFeePerGas.map((value) =>
+            parseRpcQuantity(value),
+          ),
+        }
+      : {}),
+    gasUsedRatio: response.gasUsedRatio,
   }
 }

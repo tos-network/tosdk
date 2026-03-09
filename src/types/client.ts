@@ -20,6 +20,56 @@ export type RpcTransactionRequest = {
   data?: Hex | undefined
 }
 
+export type RpcTransaction = {
+  blockHash?: Hex | null | undefined
+  blockNumber?: Hex | null | undefined
+  from: Address
+  gas?: Hex | undefined
+  hash: Hex
+  input?: Hex | undefined
+  nonce?: Hex | undefined
+  signerType?: string | undefined
+  to: Address | null
+  transactionIndex?: Hex | undefined
+  type?: Hex | string | undefined
+  value?: Hex | undefined
+  [key: string]: unknown
+}
+
+export type RpcLog = {
+  address: Address
+  blockHash?: Hex | null | undefined
+  blockNumber?: Hex | null | undefined
+  data: Hex
+  logIndex?: Hex | undefined
+  removed?: boolean | undefined
+  topics: readonly Hex[]
+  transactionHash?: Hex | null | undefined
+  transactionIndex?: Hex | undefined
+  [key: string]: unknown
+}
+
+export type LogFilterTopics = readonly (
+  | Hex
+  | null
+  | readonly (Hex | null)[]
+)[]
+
+export type LogFilter = {
+  address?: Address | readonly Address[] | undefined
+  topics?: LogFilterTopics | undefined
+  blockHash?: Hex | undefined
+  fromBlock?: BlockTag | number | bigint | undefined
+  toBlock?: BlockTag | number | bigint | undefined
+}
+
+export type FeeHistory = {
+  oldestBlock: bigint
+  reward?: bigint[][] | undefined
+  baseFeePerGas?: bigint[] | undefined
+  gasUsedRatio: number[]
+}
+
 export type RpcTransactionReceipt = {
   blockHash: Hex
   blockNumber: Hex
@@ -89,14 +139,36 @@ export type PublicClient = {
   getTransactionReceipt(parameters: {
     hash: Hex
   }): Promise<RpcTransactionReceipt | null>
+  getTransactionByHash(parameters: {
+    hash: Hex
+  }): Promise<RpcTransaction | null>
   getBlockByNumber(parameters?: {
     blockNumber?: BlockTag | number | bigint | undefined
     includeTransactions?: boolean | undefined
   }): Promise<RpcBlock | null>
+  getCode(parameters: {
+    address: Address
+    blockTag?: BlockTag | undefined
+  }): Promise<Hex>
+  getStorageAt(parameters: {
+    address: Address
+    slot: Hex
+    blockTag?: BlockTag | undefined
+  }): Promise<Hex>
+  getLogs(parameters: LogFilter): Promise<readonly RpcLog[]>
   call(parameters: {
     request: RpcTransactionRequest
     blockTag?: BlockTag | undefined
   }): Promise<Hex>
+  estimateGas(parameters: {
+    request: RpcTransactionRequest
+  }): Promise<bigint>
+  maxPriorityFeePerGas(): Promise<bigint>
+  feeHistory(parameters: {
+    blockCount: number | bigint
+    lastBlock?: BlockTag | number | bigint | undefined
+    rewardPercentiles?: readonly number[] | undefined
+  }): Promise<FeeHistory>
   waitForTransactionReceipt(
     parameters: WaitForTransactionReceiptParameters,
   ): Promise<RpcTransactionReceipt>

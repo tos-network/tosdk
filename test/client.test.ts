@@ -70,6 +70,36 @@ test('public client uses the chain default RPC URL and returns native quantities
         }
       case 'tos_call':
         return '0xdeadbeef'
+      case 'tos_getCode':
+        return '0x60016001'
+      case 'tos_getStorageAt':
+        return '0x01'
+      case 'tos_getTransactionByHash':
+        return {
+          hash: '0xaaaa',
+          from: nativeAccounts[0]!.address,
+          to: nativeAccounts[1]!.address,
+          value: toHex(42n),
+        }
+      case 'tos_getLogs':
+        return [
+          {
+            address: nativeAccounts[1]!.address,
+            data: '0xdeadbeef',
+            topics: ['0x1111'],
+          },
+        ]
+      case 'tos_estimateGas':
+        return toHex(55_555n)
+      case 'tos_maxPriorityFeePerGas':
+        return toHex(1_500_000_000n)
+      case 'tos_feeHistory':
+        return {
+          oldestBlock: toHex(90n),
+          reward: [[toHex(1n), toHex(2n)]],
+          baseFeePerGas: [toHex(10n), toHex(11n)],
+          gasUsedRatio: [0.5, 0.75],
+        }
       default:
         throw new Error(`Unexpected method: ${request.method}`)
     }
@@ -104,6 +134,57 @@ test('public client uses the chain default RPC URL and returns native quantities
       },
     }),
   ).resolves.toBe('0xdeadbeef')
+  await expect(
+    client.getCode({ address: nativeAccounts[1]!.address }),
+  ).resolves.toBe('0x60016001')
+  await expect(
+    client.getStorageAt({
+      address: nativeAccounts[1]!.address,
+      slot: '0x01',
+    }),
+  ).resolves.toBe('0x01')
+  await expect(
+    client.getTransactionByHash({ hash: '0xaaaa' }),
+  ).resolves.toMatchObject({
+    from: nativeAccounts[0]!.address,
+    hash: '0xaaaa',
+    to: nativeAccounts[1]!.address,
+  })
+  await expect(
+    client.getLogs({
+      address: nativeAccounts[1]!.address,
+      fromBlock: 1n,
+      toBlock: 5n,
+      topics: ['0x1111'],
+    }),
+  ).resolves.toEqual([
+    {
+      address: nativeAccounts[1]!.address,
+      data: '0xdeadbeef',
+      topics: ['0x1111'],
+    },
+  ])
+  await expect(
+    client.estimateGas({
+      request: {
+        from: nativeAccounts[0]!.address,
+        to: nativeAccounts[1]!.address,
+      },
+    }),
+  ).resolves.toBe(55_555n)
+  await expect(client.maxPriorityFeePerGas()).resolves.toBe(1_500_000_000n)
+  await expect(
+    client.feeHistory({
+      blockCount: 2,
+      lastBlock: 100n,
+      rewardPercentiles: [25, 75],
+    }),
+  ).resolves.toEqual({
+    oldestBlock: 90n,
+    reward: [[1n, 2n]],
+    baseFeePerGas: [10n, 11n],
+    gasUsedRatio: [0.5, 0.75],
+  })
 
   expect(calls[0]!.url).toBe(tosTestnet.rpcUrls.default.http[0])
   expect(calls[1]!.request).toMatchObject({
@@ -128,6 +209,38 @@ test('public client uses the chain default RPC URL and returns native quantities
       },
       'latest',
     ],
+  })
+  expect(calls[6]!.request).toMatchObject({
+    method: 'tos_getCode',
+    params: [nativeAccounts[1]!.address, 'latest'],
+  })
+  expect(calls[7]!.request).toMatchObject({
+    method: 'tos_getStorageAt',
+    params: [nativeAccounts[1]!.address, '0x01', 'latest'],
+  })
+  expect(calls[9]!.request).toMatchObject({
+    method: 'tos_getLogs',
+    params: [
+      {
+        address: nativeAccounts[1]!.address,
+        fromBlock: '0x1',
+        toBlock: '0x5',
+        topics: ['0x1111'],
+      },
+    ],
+  })
+  expect(calls[10]!.request).toMatchObject({
+    method: 'tos_estimateGas',
+    params: [
+      {
+        from: nativeAccounts[0]!.address,
+        to: nativeAccounts[1]!.address,
+      },
+    ],
+  })
+  expect(calls[12]!.request).toMatchObject({
+    method: 'tos_feeHistory',
+    params: ['0x2', '0x64', [25, 75]],
   })
 })
 
@@ -255,5 +368,23 @@ test('wallet client sends system actions through the system action address', asy
   expect(calls[2]!.request).toMatchObject({
     method: 'tos_sendRawTransaction',
     params: [expectedSerialized],
+  })
+})
+
+test('getLogs rejects blockHash mixed with block range parameters', async () => {
+  const client = createPublicClient({
+    chain: tosTestnet,
+    transport: http(tosTestnet.rpcUrls.default.http[0], {
+      fetchFn: vi.fn(),
+    }),
+  })
+
+  await expect(
+    client.getLogs({
+      blockHash: '0xabcd',
+      fromBlock: 1n,
+    }),
+  ).rejects.toMatchObject({
+    name: 'InvalidLogFilterError',
   })
 })
