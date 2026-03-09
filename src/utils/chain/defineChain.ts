@@ -12,15 +12,10 @@ export type DefineChainReturnType<chain extends Chain = Chain> = Prettify<
       : {})
 >
 
-export function defineChain<
-  const chain extends Chain,
->(chain: chain): DefineChainReturnType<chain> {
-  const chainInstance = {
-    formatters: undefined,
-    fees: undefined,
-    serializers: undefined,
-    ...chain,
-  } as chain
+export function defineChain<const chain extends Chain>(
+  chain: chain,
+): DefineChainReturnType<chain> {
+  const chainInstance = { ...chain } as chain
 
   function extend(base: typeof chainInstance) {
     type ExtendFn = (base: typeof chainInstance) => unknown

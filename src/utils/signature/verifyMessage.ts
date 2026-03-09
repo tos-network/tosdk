@@ -1,5 +1,5 @@
-import type { Address } from 'abitype'
 import type { ErrorType } from '../../errors/utils.js'
+import type { Address } from '../../types/address.js'
 import type {
   ByteArray,
   Hex,

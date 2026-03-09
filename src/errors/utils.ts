@@ -1,4 +1,4 @@
-import type { Address } from 'abitype'
+import type { Address } from '../types/address.js'
 
 export type ErrorType<name extends string = 'Error'> = Error & { name: name }
 

@@ -1,13 +1,6 @@
 // biome-ignore lint/performance/noBarrelFile: entrypoint module
 export { HDKey } from '@scure/bip32'
-export type { Address } from 'abitype'
-export {
-  type CreateNonceManagerParameters,
-  createNonceManager,
-  type NonceManager,
-  type NonceManagerSource,
-  nonceManager,
-} from '../utils/nonceManager.js'
+export type { Address } from '../types/address.js'
 export {
   /** @deprecated Use `SignatureToHexErrorType` instead. */
   type SerializeSignatureErrorType as SignatureToHexErrorType,
@@ -36,7 +29,6 @@ export {
 } from './mnemonicToAccount.js'
 export {
   type PrivateKeyToAccountErrorType,
-  type PrivateKeyToAccountOptions,
   privateKeyToAccount,
 } from './privateKeyToAccount.js'
 export { type ToAccountErrorType, toAccount } from './toAccount.js'
@@ -69,12 +61,6 @@ export {
   setSignEntropy,
   sign,
 } from './utils/sign.js'
-export {
-  type SignAuthorizationErrorType,
-  type SignAuthorizationParameters,
-  type SignAuthorizationReturnType,
-  signAuthorization,
-} from './utils/signAuthorization.js'
 export {
   type SignMessageErrorType,
   type SignMessageParameters,

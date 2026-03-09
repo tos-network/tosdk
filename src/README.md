@@ -2,25 +2,25 @@
 
 `tosdk` is the TypeScript SDK for building applications, agents, and services on TOS Network.
 
-This repository is a native TypeScript SDK for TOS Network. The account layer now uses 32-byte native addresses while keeping a compact client and action surface for application and agent development.
+This repository is a native TypeScript SDK for TOS Network. It focuses on native accounts, 32-byte addresses, typed-data signing, and native transaction signing without carrying the old EVM client surface.
 
 ## Current Direction
 
 - Native 32-byte account addresses
 - TypeScript-first developer experience
-- Reusable client, account, signing, and transport utilities
-- A migration path from EVM-oriented tooling toward TOS-native behavior
+- Reusable account, signing, and encoding utilities
+- A small surface area that is easy to embed into agents and services
 
 ## What Is Working Now
 
 - Private-key based local accounts
 - HD and mnemonic account derivation
 - Native 32-byte address derivation from secp256k1 keys
-- Signing helpers and wallet-oriented account utilities
+- Native transaction and typed-data signing
 
 ## Scope
 
-This SDK is still under active migration. Some modules still reflect the upstream EVM-oriented structure, but the account layer is already being converted to TOS-native behavior first.
+This SDK is intentionally narrow. It provides the native account/signing path used by the current TOS agent stack and avoids shipping unrelated legacy EVM modules.
 
 ## Example
 

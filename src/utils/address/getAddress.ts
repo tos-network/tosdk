@@ -1,7 +1,6 @@
-import type { Address } from 'abitype'
-
 import { InvalidAddressError } from '../../errors/address.js'
 import type { ErrorType } from '../../errors/utils.js'
+import type { Address } from '../../types/address.js'
 import { LruMap } from '../lru.js'
 import { type IsAddressErrorType, isAddress } from './isAddress.js'
 

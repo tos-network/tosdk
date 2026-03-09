@@ -1,1 +1,1 @@
-export const presignMessagePrefix = '\x19Ethereum Signed Message:\n'
+export const presignMessagePrefix = '\x19TOS Signed Message:\n'

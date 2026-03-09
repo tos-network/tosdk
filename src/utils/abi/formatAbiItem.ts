@@ -1,11 +1,25 @@
-import type { AbiParameter } from 'abitype'
+import type {
+  AbiConstructor,
+  AbiError,
+  AbiEvent,
+  AbiFallback,
+  AbiFunction,
+  AbiParameter,
+  AbiReceive,
+} from 'abitype'
 
 import {
   InvalidDefinitionTypeError,
   type InvalidDefinitionTypeErrorType,
 } from '../../errors/abi.js'
 import type { ErrorType } from '../../errors/utils.js'
-import type { AbiItem } from '../../types/contract.js'
+type AbiItem =
+  | AbiFunction
+  | AbiEvent
+  | AbiError
+  | AbiConstructor
+  | AbiFallback
+  | AbiReceive
 
 export type FormatAbiItemErrorType =
   | FormatAbiParamsErrorType
@@ -16,14 +30,18 @@ export function formatAbiItem(
   abiItem: AbiItem,
   { includeName = false }: { includeName?: boolean | undefined } = {},
 ) {
-  if (
-    abiItem.type !== 'function' &&
-    abiItem.type !== 'event' &&
-    abiItem.type !== 'error'
-  )
-    throw new InvalidDefinitionTypeError(abiItem.type)
-
-  return `${abiItem.name}(${formatAbiParams(abiItem.inputs, { includeName })})`
+  switch (abiItem.type) {
+    case 'constructor':
+      return `constructor(${formatAbiParams(abiItem.inputs, { includeName })})`
+    case 'fallback':
+    case 'receive':
+      return abiItem.type
+    case 'function':
+    case 'event':
+    case 'error':
+      return `${abiItem.name}(${formatAbiParams(abiItem.inputs, { includeName })})`
+  }
+  throw new InvalidDefinitionTypeError((abiItem as { type: string }).type)
 }
 
 export type FormatAbiParamsErrorType = ErrorType

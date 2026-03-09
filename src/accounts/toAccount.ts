@@ -1,5 +1,3 @@
-// TODO(v3): Rename to `toLocalAccount` + add `source` property to define source (privateKey, mnemonic, hdKey, etc).
-
 import {
   InvalidAddressError,
   type InvalidAddressErrorType,
@@ -25,11 +23,6 @@ export type ToAccountErrorType =
   | IsAddressErrorType
   | ErrorType
 
-/**
- * @description Creates an Account from a custom signing implementation.
- *
- * @returns A Local Account.
- */
 export function toAccount<accountSource extends AccountSource>(
   source: accountSource,
 ): GetAccountReturnType<accountSource> {
@@ -46,9 +39,7 @@ export function toAccount<accountSource extends AccountSource>(
     throw new InvalidAddressError({ address: source.address })
   return {
     address: source.address,
-    nonceManager: source.nonceManager,
     sign: source.sign,
-    signAuthorization: source.signAuthorization,
     signMessage: source.signMessage,
     signTransaction: source.signTransaction,
     signTypedData: source.signTypedData,

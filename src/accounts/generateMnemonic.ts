@@ -1,5 +1,6 @@
 import { generateMnemonic as generateMnemonic_ } from '@scure/bip39'
 import type { ErrorType } from '../errors/utils.js'
+import { english } from './wordlists.js'
 
 export type GenerateMnemonicErrorType = ErrorType
 
@@ -12,7 +13,7 @@ export type GenerateMnemonicErrorType = ErrorType
  * @returns A randomly generated mnemonic phrase.
  */
 export function generateMnemonic(
-  wordlist: string[],
+  wordlist: string[] = english,
   strength?: number | undefined,
 ): string {
   return generateMnemonic_(wordlist, strength)

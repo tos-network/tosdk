@@ -1,12 +1,11 @@
 {
   "name": "tosdk",
   "description": "TypeScript SDK for TOS Network",
-  "version": "2.47.0",
+  "version": "0.1.0",
   "type": "module",
   "main": "./src/_cjs/index.js",
   "module": "./src/_esm/index.js",
   "types": "./src/_types/index.d.ts",
-  "typings": "./src/_types/index.d.ts",
   "sideEffects": false,
   "files": [
     "LICENSE",
@@ -44,49 +43,29 @@
     }
   },
   "scripts": {
-    "build": "pnpm clean && pnpm build:cjs && pnpm build:esm && pnpm build:types",
-    "build:cjs": "/bin/bash ./scripts/build-cjs.sh",
-    "build:esm": "tsc --project ./tsconfig.build.json --outDir ./src/_esm && printf '{\"type\": \"module\",\"sideEffects\":false}' > ./src/_esm/package.json",
-    "build:types": "tsc --project ./tsconfig.build.json --declarationDir ./src/_types --emitDeclarationOnly --declaration --declarationMap",
     "clean": "rm -rf *.tsbuildinfo src/*.tsbuildinfo src/_esm src/_cjs src/_types",
-    "check:types": "tsc -b",
-    "preinstall": "pnpx only-allow pnpm",
-    "prepare": "pnpm simple-git-hooks",
-    "test": "vitest -c ./test/vitest.config.ts",
-    "test:typecheck": "SKIP_GLOBAL_SETUP=true vitest --typecheck.only -c ./test/vitest.config.ts"
+    "build:cjs": "tsc --project ./tsconfig.build.json --module commonjs --moduleResolution node --outDir ./src/_cjs --removeComments --verbatimModuleSyntax false && printf '{\"type\":\"commonjs\",\"sideEffects\":false}' > ./src/_cjs/package.json",
+    "build:esm": "tsc --project ./tsconfig.build.json --outDir ./src/_esm && printf '{\"type\":\"module\",\"sideEffects\":false}' > ./src/_esm/package.json",
+    "build:types": "tsc --project ./tsconfig.build.json --declarationDir ./src/_types --emitDeclarationOnly --declaration --declarationMap",
+    "build": "pnpm clean && pnpm build:cjs && pnpm build:esm && pnpm build:types",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest -c ./test/vitest.config.ts run"
+  },
+  "dependencies": {
+    "@noble/curves": "^1.9.7",
+    "@noble/hashes": "^1.8.0",
+    "@scure/bip32": "^1.7.0",
+    "@scure/bip39": "^1.6.0",
+    "abitype": "^1.2.0"
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.18.2",
-    "@ark/attest": "^0.56.0",
-    "@biomejs/biome": "^2.2.4",
-    "@changesets/changelog-github": "^0.4.8",
-    "@changesets/cli": "^2.29.7",
-    "@ethereumjs/rlp": "^5.0.2",
-    "@paulmillr/trusted-setups": "^0.1.2",
-    "@pimlico/alto": "0.0.18",
-    "@remix-run/node-fetch-server": "^0.12.0",
-    "@size-limit/preset-big-lib": "^11.2.0",
-    "@types/bun": "^1.2.22",
     "@types/node": "^24.5.2",
-    "@vitest/coverage-v8": "^4.0.15",
-    "bun": "^1.2.22",
-    "ethers": "^6.15.0",
-    "knip": "^5.64.0",
-    "micro-eth-signer": "^0.14.0",
-    "ox": "~0.14.0",
-    "permissionless": "^0.2.57",
-    "prool": "~0.2.3",
-    "publint": "^0.2.12",
-    "sherif": "^0.8.4",
-    "simple-git-hooks": "^2.13.1",
-    "size-limit": "^11.2.0",
-    "testcontainers": "^11.10.0",
-    "typescript": "catalog:",
+    "typescript": "^5.9.2",
     "vitest": "^4.0.15"
   },
   "packageManager": "pnpm@10.22.0",
   "engines": {
-    "node": ">=24.5"
+    "node": ">=20"
   },
   "license": "MIT",
   "homepage": "https://github.com/tos-network/tosdk",
@@ -108,175 +87,5 @@
     "wallet",
     "agent",
     "typescript"
-  ],
-  "simple-git-hooks": {
-    "pre-commit": "pnpm check:types"
-  },
-  "knip": {
-    "ignore": [
-      ".github/**",
-      "environments/**",
-      "vectors/**"
-    ],
-    "ignoreBinaries": [
-      "dev",
-      "forge",
-      "only-allow",
-      "printf"
-    ],
-    "ignoreDependencies": [
-      "bun",
-      "@size-limit/preset-big-lib"
-    ],
-    "ignoreWorkspaces": [
-      "examples/**",
-      "test"
-    ],
-    "vitest": {
-      "config": [
-        "test/vitest.config.ts"
-      ],
-      "entry": [
-        "**/*.{bench,bench-d,test,test-d,spec}.?(c|m)[jt]s?(x)"
-      ]
-    },
-    "workspaces": {
-      "src": {
-        "entry": [
-          "index.ts!",
-          "accounts/index.ts!",
-          "chains/index.ts!"
-        ],
-        "ignore": [
-          "node/trustedSetups_cjs.ts"
-        ]
-      }
-    }
-  },
-  "size-limit": [
-    {
-      "name": "import * from 'tosdk' (esm)",
-      "path": "./src/_esm/index.js",
-      "limit": "85 kB",
-      "import": "*"
-    },
-    {
-      "name": "const tosdk = require('tosdk') (cjs)",
-      "path": "./src/_cjs/index.js",
-      "limit": "105 kB"
-    },
-    {
-      "name": "import { createPublicClient, http } from 'tosdk'",
-      "path": "./src/_esm/index.js",
-      "limit": "6.6 kB",
-      "import": "{ createPublicClient, http }"
-    },
-    {
-      "name": "import * from 'tosdk/accounts'",
-      "path": "./src/_esm/accounts/index.js",
-      "limit": "97 kB",
-      "import": "*"
-    },
-    {
-      "name": "import { privateKeyToAccount } from 'tosdk/accounts'",
-      "path": "./src/_esm/accounts/index.js",
-      "limit": "22 kB",
-      "import": "{ privateKeyToAccount }"
-    },
-    {
-      "name": "import { mnemonicToAccount } from 'tosdk/accounts'",
-      "path": "./src/_esm/accounts/index.js",
-      "limit": "30 kB",
-      "import": "{ mnemonicToAccount }"
-    },
-    {
-      "name": "import * from 'tosdk/actions'",
-      "path": "./src/_esm/actions/index.js",
-      "limit": "69 kB",
-      "import": "*"
-    },
-    {
-      "name": "import { getBlockNumber } from 'tosdk/actions'",
-      "path": "./src/_esm/actions/index.js",
-      "limit": "1 kB",
-      "import": "{ getBlockNumber }"
-    },
-    {
-      "name": "import * from 'tosdk/chains'",
-      "path": "./src/_esm/chains/index.js",
-      "limit": "100 kB",
-      "import": "*"
-    }
-  ],
-  "pnpm": {
-    "overrides": {
-      "@opentelemetry/api@^1.8.0": "~1.7.0",
-      "hono@<4.2.7": "^4.2.7",
-      "ws@>=8.0.0 <8.17.1": "^8.17.1",
-      "ws@>=7.0.0 <7.5.10": "^7.5.10",
-      "hono@<4.5.8": "^4.5.8",
-      "micromatch@<4.0.8": "^4.0.8",
-      "send@<0.19.0": "^0.19.0",
-      "serve-static@<1.16.0": "^1.16.0",
-      "cookie@<0.7.0": "^0.7.0",
-      "find-my-way@>=5.5.0 <8.2.2": "^8.2.2",
-      "cross-spawn@<6.0.6": ">=6.0.6",
-      "cross-spawn@>=7.0.0 <7.0.5": ">=7.0.5",
-      "smol-toml@<=1.3.0": "1.3.1",
-      "nanoid@>=4.0.0 <5.0.9": "5.0.9",
-      "vite@>=6.2.0 <6.2.3": "6.2.3",
-      "vite@>=6.2.0 <6.2.4": "6.2.4",
-      "estree-util-value-to-estree@<3.3.3": "3.3.3",
-      "vite@>=6.2.0 <6.2.6": "6.2.6",
-      "@babel/runtime@<7.26.10": "7.26.10",
-      "@babel/helpers@<7.26.10": "7.26.10",
-      "react-router@>=7.0 <=7.5.1": "7.5.2",
-      "react-router@>=7.2.0 <=7.5.1": "7.5.2",
-      "vite@>=6.2.0 <=6.2.6": "6.2.7",
-      "vite@>=6.2.0 <6.2.5": "6.2.5",
-      "tar-fs@>=3.0.0 <3.0.7": "3.0.7",
-      "brace-expansion@>=2.0.0 <=2.0.1": "2.0.2",
-      "on-headers@<1.1.0": "1.1.0",
-      "tar-fs@>=3.0.0 <3.0.9": "3.0.9",
-      "vite@>=6.0.0 <=6.3.5": "6.3.6",
-      "hono@<4.9.7": "4.9.7",
-      "tar-fs@>=3.0.0 <3.1.1": ">=3.1.1",
-      "vite@>=6.0.0 <=6.4.0": "6.4.1",
-      "hono@>=1.1.0 <4.10.2": "4.10.2",
-      "glob@>=10.3.7 <=11.0.3": ">=11.1.0",
-      "mdast-util-to-hast@>=13.0.0 <13.2.1": "13.2.1",
-      "react-router@>=7.0.0 <=7.11.0": "7.12.0",
-      "hono@<4.11.4": "4.11.4",
-      "undici@>=7.0.0 <7.18.2": "7.18.2",
-      "tar@<=7.5.3": "7.5.4",
-      "lodash-es@>=4.0.0 <=4.17.22": "4.17.23",
-      "lodash@>=4.0.0 <=4.17.22": "4.17.23",
-      "hono@<4.11.7": "4.11.7",
-      "next@>=15.6.0-canary.0 <16.1.5": ">=16.1.5",
-      "next@>=16.0.0-beta.0 <16.1.5": ">=16.1.5",
-      "tar@<7.5.7": "7.5.7",
-      "react-server-dom-webpack@>=19.2.0-canary-63779030-20250328 <19.2.4": "19.2.4",
-      "fastify@<5.7.2": "5.7.2",
-      "fastify@<=5.7.2": "5.7.3",
-      "@isaacs/brace-expansion@<=5.0.0": "5.0.1",
-      "@modelcontextprotocol/sdk@>=1.10.0 <=1.25.3": "1.26.0",
-      "webpack@>=5.49.0 <=5.104.0": "5.104.1",
-      "qs@<=6.14.1": "6.14.2",
-      "ajv@<8.18.0": "8.18.0",
-      "hono@<4.11.10": "4.11.10",
-      "minimatch@<10.2.1": "10.2.1",
-      "tar@<7.5.8": "7.5.8",
-      "rollup@>=4.0.0 <4.59.0": "4.59.0",
-      "basic-ftp@<5.2.0": "5.2.0",
-      "minimatch@>=10.0.0 <10.2.3": "10.2.3",
-      "serialize-javascript@<=7.0.2": "7.0.3",
-      "hono@<4.12.4": "4.12.4",
-      "@hono/node-server@<1.19.10": "1.19.10"
-    },
-    "onlyBuiltDependencies": [
-      "bun",
-      "protobufjs",
-      "simple-git-hooks"
-    ]
-  }
+  ]
 }

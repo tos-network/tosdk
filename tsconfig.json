@@ -1,13 +1,17 @@
 {
-	"files": [],
-	"references": [
-		{ "path": "./scripts/tsconfig.json" },
-		{ "path": "./site/tsconfig.json" },
-		{ "path": "./src/tsconfig.json" },
-		{ "path": "./test/tsconfig.json" }
-	],
-	"compilerOptions": {
-		"module": "nodenext",
-		"moduleResolution": "nodenext"
-	}
+  "extends": "./tsconfig.base.json",
+  "include": ["src/**/*.ts", "test/**/*.ts"],
+  "exclude": ["src/_esm/**", "src/_cjs/**", "src/_types/**", "node_modules/**"],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "paths": {
+      "~test/*": ["test/src/*"],
+      "tosdk": ["src/index.ts"],
+      "tosdk/accounts": ["src/accounts/index.ts"],
+      "tosdk/chains": ["src/chains/index.ts"]
+    },
+    "noEmit": true
+  }
 }

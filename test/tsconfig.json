@@ -1,20 +1,16 @@
 {
   "extends": "../tsconfig.base.json",
-  "exclude": ["./tempo"],
-  "include": [".", "../src", "../contracts/generated.ts"],
+  "include": [".", "../src"],
   "compilerOptions": {
-    "composite": true,
+    "composite": false,
     "noEmit": true,
-    "types": ["@types/bun"],
+    "types": ["node"],
     "baseUrl": ".",
     "paths": {
-      "~contracts/*": ["../contracts/*"],
       "~test/*": ["./src/*"],
-      "viem": ["../src/index.ts"],
-      "viem/actions": ["../src/actions/index.ts"],
-      "viem/accounts": ["../src/accounts/index.ts"],
-      "viem/chains": ["../src/chains/index.ts"],
-      "viem/tempo": ["../src/tempo/index.ts"],
+      "tosdk": ["../src/index.ts"],
+      "tosdk/accounts": ["../src/accounts/index.ts"],
+      "tosdk/chains": ["../src/chains/index.ts"]
     }
   }
 }

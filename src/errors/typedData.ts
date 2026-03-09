@@ -9,7 +9,7 @@ export type InvalidDomainErrorType = InvalidDomainError & {
 export class InvalidDomainError extends BaseError {
   constructor({ domain }: { domain: unknown }) {
     super(`Invalid domain "${stringify(domain)}".`, {
-      metaMessages: ['Must be a valid EIP-712 domain.'],
+      metaMessages: ['Must be a valid typed-data domain.'],
     })
   }
 }

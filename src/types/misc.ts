@@ -1,6 +1,9 @@
 import type { OneOf } from './utils.js'
 
+import type { Address } from './address.js'
+
 export type ByteArray = Uint8Array
+export type { Address }
 export type Hex = `0x${string}`
 export type Hash = `0x${string}`
 export type LogTopic = Hex | Hex[] | null

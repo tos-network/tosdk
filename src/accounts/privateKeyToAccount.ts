@@ -2,7 +2,6 @@ import { secp256k1 } from '@noble/curves/secp256k1'
 import type { ErrorType } from '../errors/utils.js'
 import type { Hex } from '../types/misc.js'
 import { type ToHexErrorType, toHex } from '../utils/encoding/toHex.js'
-import type { NonceManager } from '../utils/nonceManager.js'
 import { type ToAccountErrorType, toAccount } from './toAccount.js'
 import type { PrivateKeyAccount } from './types.js'
 import {
@@ -10,7 +9,6 @@ import {
   publicKeyToAddress,
 } from './utils/publicKeyToAddress.js'
 import { type SignErrorType, sign } from './utils/sign.js'
-import { signAuthorization } from './utils/signAuthorization.js'
 import { type SignMessageErrorType, signMessage } from './utils/signMessage.js'
 import {
   type SignTransactionErrorType,
@@ -20,10 +18,6 @@ import {
   type SignTypedDataErrorType,
   signTypedData,
 } from './utils/signTypedData.js'
-
-export type PrivateKeyToAccountOptions = {
-  nonceManager?: NonceManager | undefined
-}
 
 export type PrivateKeyToAccountErrorType =
   | ToAccountErrorType
@@ -35,33 +29,20 @@ export type PrivateKeyToAccountErrorType =
   | SignTypedDataErrorType
   | ErrorType
 
-/**
- * @description Creates an Account from a private key.
- *
- * @returns A Private Key Account with a 32-byte native address.
- */
-export function privateKeyToAccount(
-  privateKey: Hex,
-  options: PrivateKeyToAccountOptions = {},
-): PrivateKeyAccount {
-  const { nonceManager } = options
+export function privateKeyToAccount(privateKey: Hex): PrivateKeyAccount {
   const publicKey = toHex(secp256k1.getPublicKey(privateKey.slice(2), false))
   const address = publicKeyToAddress(publicKey)
 
   const account = toAccount({
     address,
-    nonceManager,
     async sign({ hash }) {
       return sign({ hash, privateKey, to: 'hex' })
-    },
-    async signAuthorization(authorization) {
-      return signAuthorization({ ...authorization, privateKey })
     },
     async signMessage({ message }) {
       return signMessage({ message, privateKey })
     },
-    async signTransaction(transaction, { serializer } = {}) {
-      return signTransaction({ privateKey, transaction, serializer })
+    async signTransaction(transaction) {
+      return signTransaction({ privateKey, transaction })
     },
     async signTypedData(typedData) {
       return signTypedData({ ...typedData, privateKey } as any)

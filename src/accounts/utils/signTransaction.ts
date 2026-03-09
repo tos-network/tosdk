@@ -7,7 +7,6 @@ import {
   type Keccak256ErrorType,
   keccak256,
 } from '../../utils/hash/keccak256.js'
-import type { GetTransactionType } from '../../utils/transaction/getTransactionType.js'
 import {
   type SerializeTransactionFn,
   serializeTransaction,
@@ -24,10 +23,7 @@ export type SignTransactionParameters<
   serializer?: serializer | undefined
 }
 
-export type SignTransactionReturnType<
-  serializer extends SerializeTransactionFn<any> = SerializeTransactionFn<any>,
-  transaction extends Parameters<serializer>[0] = Parameters<serializer>[0],
-> = TransactionSerialized<GetTransactionType<transaction>>
+export type SignTransactionReturnType = TransactionSerialized
 
 export type SignTransactionErrorType =
   | Keccak256ErrorType
@@ -39,30 +35,19 @@ export async function signTransaction<
   transaction extends Parameters<serializer>[0] = Parameters<serializer>[0],
 >(
   parameters: SignTransactionParameters<serializer, transaction>,
-): Promise<SignTransactionReturnType<serializer, transaction>> {
+): Promise<SignTransactionReturnType> {
   const {
     privateKey,
     transaction,
     serializer = serializeTransaction as SerializeTransactionFn<any>,
   } = parameters
 
-  const signableTransaction = (() => {
-    // For EIP-4844 Transactions, we want to sign the transaction payload body (tx_payload_body) without the sidecars (ie. without the network wrapper).
-    // See: https://github.com/ethereum/EIPs/blob/e00f4daa66bd56e2dbd5f1d36d09fd613811a48b/EIPS/eip-4844.md#networking
-    if (transaction.type === 'eip4844')
-      return {
-        ...transaction,
-        sidecars: false,
-      }
-    return transaction
-  })()
-
   const signature = await sign({
-    hash: keccak256(await serializer(signableTransaction as any)),
+    hash: keccak256(await serializer(transaction as any)),
     privateKey,
   })
   return (await serializer(
     transaction as any,
     signature,
-  )) as SignTransactionReturnType<serializer, transaction>
+  )) as SignTransactionReturnType
 }

@@ -1,4 +1,5 @@
 import type { ErrorType } from '../../errors/utils.js'
+import type { Address } from '../../types/address.js'
 import type { Hex } from '../../types/misc.js'
 import {
   type GetAddressErrorType,
@@ -8,8 +9,6 @@ import {
   type Keccak256ErrorType,
   keccak256,
 } from '../../utils/hash/keccak256.js'
-import type { Address } from 'abitype'
-
 export type PublicKeyToAddressErrorType =
   | GetAddressErrorType
   | Keccak256ErrorType
