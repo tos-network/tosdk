@@ -8,7 +8,7 @@ import type { TypedDataDefinition } from '../types/typedData.js'
 import type { OneOf, Prettify } from '../types/utils.js'
 
 export type Account<address extends Address = Address> = OneOf<
-  JsonRpcAccount<address> | LocalAccount<string, address>
+  RemoteAccount<address> | LocalAccount<string, address>
 >
 
 export type AccountSource = Address | CustomSource
@@ -26,9 +26,9 @@ export type CustomSource = {
   ) => Promise<Hex>
 }
 
-export type JsonRpcAccount<address extends Address = Address> = {
+export type RemoteAccount<address extends Address = Address> = {
   address: address
-  type: 'json-rpc'
+  type: 'remote'
 }
 
 export type LocalAccount<

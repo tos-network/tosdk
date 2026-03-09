@@ -57,10 +57,10 @@ test('hd and mnemonic derivation follow the native path', () => {
 })
 
 describe('account coercion', () => {
-  test('toAccount converts a native address into a json-rpc account', () => {
+  test('toAccount converts a native address into a remote account', () => {
     expect(toAccount(nativeAccounts[0]!.address)).toEqual({
       address: nativeAccounts[0]!.address,
-      type: 'json-rpc',
+      type: 'remote',
     })
   })
 

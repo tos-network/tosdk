@@ -10,12 +10,12 @@ import {
 import type {
   AccountSource,
   CustomSource,
-  JsonRpcAccount,
+  RemoteAccount,
   LocalAccount,
 } from './types.js'
 
 type GetAccountReturnType<accountSource extends AccountSource> =
-  | (accountSource extends string ? JsonRpcAccount : never)
+  | (accountSource extends string ? RemoteAccount : never)
   | (accountSource extends CustomSource ? LocalAccount : never)
 
 export type ToAccountErrorType =
@@ -31,7 +31,7 @@ export function toAccount<accountSource extends AccountSource>(
       throw new InvalidAddressError({ address: source })
     return {
       address: source,
-      type: 'json-rpc',
+      type: 'remote',
     } as GetAccountReturnType<accountSource>
   }
 

@@ -38,7 +38,7 @@ export type {
   CustomSource,
   HDAccount,
   HDOptions,
-  JsonRpcAccount,
+  RemoteAccount,
   LocalAccount,
   PrivateKeyAccount,
 } from './types.js'
