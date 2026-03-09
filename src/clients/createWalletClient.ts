@@ -1,5 +1,7 @@
 import type { ErrorType } from '../errors/utils.js'
 import type {
+  DeployPackageParameters,
+  SendPackageTransactionParameters,
   SendSystemActionParameters,
   SignTransactionParameters,
   WalletClient,
@@ -8,6 +10,8 @@ import type {
 import type { Address } from '../types/address.js'
 import type { Hex } from '../types/misc.js'
 import { toHex, type ToHexErrorType } from '../utils/encoding/toHex.js'
+import { encodePackageCallData } from '../utils/contract/encodePackageCallData.js'
+import { encodePackageDeployData } from '../utils/contract/encodePackageDeployData.js'
 import { createPublicClient, type CreatePublicClientErrorType } from './createPublicClient.js'
 import { getAddress, type GetAddressErrorType } from '../utils/address/getAddress.js'
 
@@ -55,7 +59,7 @@ export function createWalletClient(config: WalletClientConfig): WalletClient {
       gas: BigInt(gas),
       nonce: resolvedNonce,
       signerType,
-      to: getAddress(to),
+      ...(typeof to !== 'undefined' && to !== null ? { to: getAddress(to) } : {}),
       type: 'native',
       value: BigInt(value),
     })
@@ -65,6 +69,35 @@ export function createWalletClient(config: WalletClientConfig): WalletClient {
     const serializedTransaction = await signTransaction(parameters)
     return sendRawTransaction({ serializedTransaction })
   }
+
+  const sendPackageTransaction = async ({
+    packageName,
+    functionSignature,
+    args = [],
+    ...rest
+  }: SendPackageTransactionParameters) =>
+    sendTransaction({
+      ...rest,
+      data: encodePackageCallData({
+        packageName,
+        functionSignature,
+        args,
+      }),
+    })
+
+  const deployPackage = async ({
+    packageBinary,
+    constructorArgs = [],
+    ...rest
+  }: DeployPackageParameters) =>
+    sendTransaction({
+      ...rest,
+      to: undefined,
+      data: encodePackageDeployData({
+        packageBinary,
+        constructorArgs,
+      }),
+    })
 
   const sendSystemAction = async ({
     account = config.account,
@@ -87,6 +120,8 @@ export function createWalletClient(config: WalletClientConfig): WalletClient {
     signTransaction,
     sendRawTransaction,
     sendTransaction,
+    sendPackageTransaction,
+    deployPackage,
     sendSystemAction,
   }
 }

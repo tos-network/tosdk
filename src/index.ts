@@ -1,7 +1,17 @@
 export type { PrivateKeyAccount } from './accounts/types.js'
 export type { Address } from './types/address.js'
 export type { Chain } from './types/chain.js'
+export type {
+  CallPackageParameters,
+  DeployPackageParameters,
+  PackageArgument,
+  SendPackageTransactionParameters,
+} from './types/contract.js'
 export type { Hex, Signature } from './types/misc.js'
+export type {
+  MarketBindingKind,
+  MarketBindingReceipt,
+} from './types/market.js'
 export type {
   SettlementKind,
   SettlementReceipt,
@@ -59,6 +69,12 @@ export {
   type Keccak256ErrorType,
 } from './utils/hash/keccak256.js'
 export {
+  canonicalizeMarketBindingReceipt,
+  canonicalizeMarketBindingValue,
+  hashMarketBindingReceipt,
+  hashMarketBindingValue,
+} from './utils/market.js'
+export {
   canonicalizeSettlementReceipt,
   canonicalizeSettlementValue,
   hashSettlementReceipt,
@@ -77,3 +93,10 @@ export {
   extendSchema,
   type DefineChainReturnType,
 } from './utils/chain/defineChain.js'
+export { encodeAbiParameters } from './utils/abi/encodeAbiParameters.js'
+export {
+  encodePackageCallData,
+} from './utils/contract/encodePackageCallData.js'
+export {
+  encodePackageDeployData,
+} from './utils/contract/encodePackageDeployData.js'

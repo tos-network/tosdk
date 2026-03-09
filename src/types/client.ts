@@ -2,6 +2,12 @@ import type { PrivateKeyAccount } from '../accounts/types.js'
 
 import type { Address } from './address.js'
 import type { Chain } from './chain.js'
+import type {
+  CallPackageParameters,
+  DeployPackageParameters,
+  PackageArgument,
+  SendPackageTransactionParameters,
+} from './contract.js'
 import type { Hex } from './misc.js'
 
 export type BlockTag =
@@ -201,6 +207,7 @@ export type PublicClient = {
     request: RpcTransactionRequest
     blockTag?: BlockTag | undefined
   }): Promise<Hex>
+  callPackage(parameters: CallPackageParameters): Promise<Hex>
   estimateGas(parameters: {
     request: RpcTransactionRequest
   }): Promise<bigint>
@@ -233,7 +240,7 @@ export type SignTransactionParameters = {
   chainId?: number | bigint | undefined
   nonce?: number | bigint | undefined
   gas?: number | bigint | undefined
-  to: Address
+  to?: Address | null | undefined
   value?: number | bigint | undefined
   data?: Hex | undefined
   from?: Address | undefined
@@ -253,5 +260,16 @@ export type WalletClient = PublicClient & {
   signTransaction(parameters: SignTransactionParameters): Promise<Hex>
   sendRawTransaction(parameters: { serializedTransaction: Hex }): Promise<Hex>
   sendTransaction(parameters: SignTransactionParameters): Promise<Hex>
+  sendPackageTransaction(
+    parameters: SendPackageTransactionParameters,
+  ): Promise<Hex>
+  deployPackage(parameters: DeployPackageParameters): Promise<Hex>
   sendSystemAction(parameters: SendSystemActionParameters): Promise<Hex>
+}
+
+export type {
+  CallPackageParameters,
+  DeployPackageParameters,
+  PackageArgument,
+  SendPackageTransactionParameters,
 }

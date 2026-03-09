@@ -5,6 +5,7 @@ import {
 } from '../errors/client.js'
 import type {
   BlockTag,
+  CallPackageParameters,
   FeeHistory,
   LogFilter,
   PublicClient,
@@ -21,6 +22,7 @@ import type {
 import type { Hex } from '../types/misc.js'
 import { type NumberToHexErrorType, numberToHex } from '../utils/encoding/toHex.js'
 import { createTransport, http } from '../transports/index.js'
+import { encodePackageCallData } from '../utils/contract/encodePackageCallData.js'
 import { getAddress, type GetAddressErrorType } from '../utils/address/getAddress.js'
 import {
   InvalidLogFilterError,
@@ -135,6 +137,25 @@ export function createPublicClient(
     async call({ request: callRequest, blockTag = 'latest' }) {
       return request<Hex>('tos_call', [
         serializeRpcTransactionRequest(callRequest),
+        normalizeBlockTag(blockTag),
+      ])
+    },
+    async callPackage({
+      address,
+      packageName,
+      functionSignature,
+      args = [],
+      blockTag = 'latest',
+    }: CallPackageParameters) {
+      return request<Hex>('tos_call', [
+        serializeRpcTransactionRequest({
+          to: getAddress(address),
+          data: encodePackageCallData({
+            packageName,
+            functionSignature,
+            args,
+          }),
+        }),
         normalizeBlockTag(blockTag),
       ])
     },
