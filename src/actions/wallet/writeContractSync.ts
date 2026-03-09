@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { Abi } from 'abitype'
 
 import type { Account } from '../../accounts/types.js'
@@ -14,7 +13,7 @@ import {
   type SendTransactionSyncReturnType,
   sendTransactionSync,
 } from './sendTransactionSync.js'
-import { type WriteContractParameters, writeContract } from './writeContract.js'
+import { writeContract } from './writeContract.js'
 
 export type { WriteContractErrorType as WriteContractSyncErrorType } from './writeContract.js'
 
@@ -32,18 +31,12 @@ export type WriteContractSyncParameters<
   chain extends Chain | undefined = Chain | undefined,
   account extends Account | undefined = Account | undefined,
   chainOverride extends Chain | undefined = Chain | undefined,
-> = WriteContractParameters<
-  abi,
-  functionName,
-  args,
-  chain,
-  account,
-  chainOverride
-> &
-  Pick<
-    SendTransactionSyncParameters<chain>,
-    'pollingInterval' | 'throwOnReceiptRevert' | 'timeout'
-  >
+> = {
+  [key: string]: unknown
+} & Pick<
+  SendTransactionSyncParameters<chain>,
+  'pollingInterval' | 'throwOnReceiptRevert' | 'timeout'
+>
 
 export type WriteContractSyncReturnType<
   chain extends Chain | undefined = Chain | undefined,
@@ -84,24 +77,10 @@ export type WriteContractSyncReturnType<
 export async function writeContractSync<
   chain extends Chain | undefined,
   account extends Account | undefined,
-  const abi extends Abi | readonly unknown[],
-  functionName extends ContractFunctionName<abi, 'nonpayable' | 'payable'>,
-  args extends ContractFunctionArgs<
-    abi,
-    'nonpayable' | 'payable',
-    functionName
-  >,
   chainOverride extends Chain | undefined,
 >(
   client: Client<Transport, chain, account>,
-  parameters: WriteContractSyncParameters<
-    abi,
-    functionName,
-    args,
-    chain,
-    account,
-    chainOverride
-  >,
+  parameters: WriteContractSyncParameters<chain, account, chainOverride>,
 ): Promise<WriteContractSyncReturnType<chain>> {
   return writeContract.internal(
     client,

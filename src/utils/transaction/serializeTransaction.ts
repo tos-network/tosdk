@@ -1,4 +1,3 @@
-// @ts-nocheck
 import {
   InvalidLegacyVError,
   type InvalidLegacyVErrorType,
@@ -28,7 +27,7 @@ import type {
   TransactionSerializedLegacy,
   TransactionType,
 } from '../../types/transaction.js'
-import type { MaybePromise, OneOf } from '../../types/utils.js'
+import type { MaybePromise } from '../../types/utils.js'
 import {
   type SerializeAuthorizationListErrorType,
   serializeAuthorizationList,
@@ -83,24 +82,16 @@ import {
 } from './serializeAccessList.js'
 
 export type SerializedTransactionReturnType<
-  transaction extends TransactionSerializable = TransactionSerializable,
-  ///
-  _transactionType extends TransactionType = GetTransactionType<transaction>,
+  _transactionType extends TransactionType = TransactionType,
 > = TransactionSerialized<_transactionType>
 
 export type SerializeTransactionFn<
   transaction extends TransactionSerializableGeneric = TransactionSerializable,
-  ///
-  _transactionType extends TransactionType = never,
+  _transactionType extends TransactionType = TransactionType,
 > = (
-  transaction: OneOf<TransactionSerializable | transaction> | any,
+  transaction: transaction,
   signature?: Signature | undefined,
-) => MaybePromise<
-  SerializedTransactionReturnType<
-    OneOf<TransactionSerializable | transaction> | any,
-    _transactionType
-  >
->
+) => MaybePromise<TransactionSerialized<_transactionType>>
 
 export type SerializeTransactionErrorType =
   | GetTransactionTypeErrorType
@@ -112,50 +103,46 @@ export type SerializeTransactionErrorType =
   | SerializeTransactionLegacyErrorType
   | ErrorType
 
-export function serializeTransaction<
-  const transaction extends TransactionSerializable,
-  ///
-  _transactionType extends TransactionType = GetTransactionType<transaction>,
->(
-  transaction: transaction,
+export function serializeTransaction(
+  transaction: TransactionSerializable,
   signature?: Signature | undefined,
-): SerializedTransactionReturnType<transaction, _transactionType> {
-  const type = getTransactionType(transaction) as GetTransactionType
+): TransactionSerialized {
+  const type = getTransactionType(transaction as any) as GetTransactionType
 
   if (type === 'native')
     return serializeTransactionNative(
       transaction as TransactionSerializableNative,
       signature,
-    ) as SerializedTransactionReturnType<transaction>
+    ) as TransactionSerialized
 
   if (type === 'eip1559')
     return serializeTransactionEIP1559(
       transaction as TransactionSerializableEIP1559,
       signature,
-    ) as SerializedTransactionReturnType<transaction>
+    ) as TransactionSerialized
 
   if (type === 'eip2930')
     return serializeTransactionEIP2930(
       transaction as TransactionSerializableEIP2930,
       signature,
-    ) as SerializedTransactionReturnType<transaction>
+    ) as TransactionSerialized
 
   if (type === 'eip4844')
     return serializeTransactionEIP4844(
       transaction as TransactionSerializableEIP4844,
       signature,
-    ) as SerializedTransactionReturnType<transaction>
+    ) as TransactionSerialized
 
   if (type === 'eip7702')
     return serializeTransactionEIP7702(
       transaction as TransactionSerializableEIP7702,
       signature,
-    ) as SerializedTransactionReturnType<transaction>
+    ) as TransactionSerialized
 
   return serializeTransactionLegacy(
     transaction as TransactionSerializableLegacy,
     signature as SignatureLegacy,
-  ) as SerializedTransactionReturnType<transaction>
+  ) as TransactionSerialized
 }
 
 type SerializeTransactionNativeErrorType =

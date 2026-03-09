@@ -12,11 +12,11 @@ let errorConfig: ErrorConfig = {
     docsSlug,
   }: BaseErrorParameters) =>
     docsPath
-      ? `${docsBaseUrl ?? 'https://viem.sh'}${docsPath}${
+      ? `${docsBaseUrl ?? 'https://github.com/tos-network/tosdk'}${docsPath}${
           docsSlug ? `#${docsSlug}` : ''
         }`
       : undefined,
-  version: `viem@${version}`,
+  version: `tosdk@${version}`,
 }
 
 export function setErrorConfig(config: ErrorConfig) {

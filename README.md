@@ -2,7 +2,7 @@
 
 `tosdk` is the TypeScript SDK for building applications, agents, and services on TOS Network.
 
-This repository started from a fork of `viem`, and is being adapted toward TOS-native semantics. The account layer now uses 32-byte native addresses while keeping the familiar client and action structure that made the original codebase practical to work with.
+This repository is a native TypeScript SDK for TOS Network. The account layer now uses 32-byte native addresses while keeping a compact client and action surface for application and agent development.
 
 ## Current Direction
 

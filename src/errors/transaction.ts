@@ -35,7 +35,7 @@ export class FeeConflictError extends BaseError {
     super(
       [
         'Cannot specify both a `gasPrice` and a `maxFeePerGas`/`maxPriorityFeePerGas`.',
-        'Use `maxFeePerGas`/`maxPriorityFeePerGas` for EIP-1559 compatible networks, and `gasPrice` for others.',
+        'Use `maxFeePerGas`/`maxPriorityFeePerGas` for typed-fee transactions, and `gasPrice` for legacy-fee transactions.',
       ].join('\n'),
       { name: 'FeeConflictError' },
     )
@@ -67,12 +67,13 @@ export class InvalidSerializableTransactionError extends BaseError {
         '}',
         '',
         'To infer the type, either provide:',
+        '- a native transaction with `from` and `signerType`, or',
         '- a `type` to the Transaction, or',
-        '- an EIP-1559 Transaction with `maxFeePerGas`, or',
-        '- an EIP-2930 Transaction with `gasPrice` & `accessList`, or',
-        '- an EIP-4844 Transaction with `blobs`, `blobVersionedHashes`, `sidecars`, or',
-        '- an EIP-7702 Transaction with `authorizationList`, or',
-        '- a Legacy Transaction with `gasPrice`',
+        '- a typed-fee transaction with `maxFeePerGas`, or',
+        '- an access-list transaction with `gasPrice` & `accessList`, or',
+        '- a blob transaction with `blobs`, `blobVersionedHashes`, or `sidecars`, or',
+        '- an authorization-list transaction with `authorizationList`, or',
+        '- a legacy transaction with `gasPrice`',
       ],
       name: 'InvalidSerializableTransactionError',
     })

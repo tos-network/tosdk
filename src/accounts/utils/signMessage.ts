@@ -22,8 +22,7 @@ export type SignMessageErrorType =
   | ErrorType
 
 /**
- * @description Calculates an Ethereum-specific signature in [EIP-191 format](https://eips.ethereum.org/EIPS/eip-191):
- * `keccak256("\x19Ethereum Signed Message:\n" + len(message) + message))`.
+ * @description Calculates a prefixed message signature over the message hash.
  *
  * @returns The signature.
  */

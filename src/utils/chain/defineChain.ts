@@ -1,4 +1,4 @@
-import type { Chain, ChainFormatters } from '../../types/chain.js'
+import type { Chain } from '../../types/chain.js'
 import type { Assign, Prettify } from '../../types/utils.js'
 
 export type DefineChainReturnType<chain extends Chain = Chain> = Prettify<
@@ -13,15 +13,14 @@ export type DefineChainReturnType<chain extends Chain = Chain> = Prettify<
 >
 
 export function defineChain<
-  formatters extends ChainFormatters,
-  const chain extends Chain<formatters>,
->(chain: chain): DefineChainReturnType<Assign<Chain<undefined>, chain>> {
+  const chain extends Chain,
+>(chain: chain): DefineChainReturnType<chain> {
   const chainInstance = {
     formatters: undefined,
     fees: undefined,
     serializers: undefined,
     ...chain,
-  } as Assign<Chain<undefined>, chain>
+  } as chain
 
   function extend(base: typeof chainInstance) {
     type ExtendFn = (base: typeof chainInstance) => unknown

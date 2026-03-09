@@ -18,6 +18,7 @@ import type {
   TransactionEIP7702,
   TransactionLegacy,
   TransactionReceipt,
+  TransactionRequestNative,
   TransactionRequestEIP1559,
   TransactionRequestEIP2930,
   TransactionRequestEIP4844,
@@ -30,6 +31,7 @@ export type Index = `0x${string}`
 export type Quantity = `0x${string}`
 export type Status = '0x0' | '0x1'
 export type TransactionType =
+  | '0x00'
   | '0x0'
   | '0x1'
   | '0x2'
@@ -71,6 +73,7 @@ export type RpcTransactionReceipt = TransactionReceipt<
   TransactionType
 >
 export type RpcTransactionRequest = OneOf<
+  | TransactionRequestNative<Quantity, Index, '0x00'>
   | TransactionRequestLegacy<Quantity, Index, '0x0'>
   | TransactionRequestEIP2930<Quantity, Index, '0x1'>
   | TransactionRequestEIP1559<Quantity, Index, '0x2'>

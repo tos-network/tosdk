@@ -1,49 +1,59 @@
 {
-  "name": "viem",
-  "private": true,
+  "name": "tosdk",
+  "description": "TypeScript SDK for TOS Network",
+  "version": "2.47.0",
   "type": "module",
+  "main": "./src/_cjs/index.js",
+  "module": "./src/_esm/index.js",
+  "types": "./src/_types/index.d.ts",
+  "typings": "./src/_types/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "LICENSE",
+    "README.md",
+    "src/_cjs/**",
+    "src/_esm/**",
+    "src/_types/**"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/_types/index.d.ts",
+      "import": "./src/_esm/index.js",
+      "default": "./src/_cjs/index.js"
+    },
+    "./accounts": {
+      "types": "./src/_types/accounts/index.d.ts",
+      "import": "./src/_esm/accounts/index.js",
+      "default": "./src/_cjs/accounts/index.js"
+    },
+    "./chains": {
+      "types": "./src/_types/chains/index.d.ts",
+      "import": "./src/_esm/chains/index.js",
+      "default": "./src/_cjs/chains/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "typesVersions": {
+    "*": {
+      "accounts": [
+        "./src/_types/accounts/index.d.ts"
+      ],
+      "chains": [
+        "./src/_types/chains/index.d.ts"
+      ]
+    }
+  },
   "scripts": {
-    "bench": "vitest bench",
-    "bench:types": "TYPES=true vitest -c ./test/vitest.config.ts --project type-bench",
     "build": "pnpm clean && pnpm build:cjs && pnpm build:esm && pnpm build:types",
-    "build:cjs": "pnpm build:trustedSetups:start && tsc --project ./tsconfig.build.json --module commonjs --moduleResolution node --outDir ./src/_cjs --removeComments --verbatimModuleSyntax false && printf '{\"type\":\"commonjs\"}' > ./src/_cjs/package.json && pnpm build:trustedSetups:end",
+    "build:cjs": "/bin/bash ./scripts/build-cjs.sh",
     "build:esm": "tsc --project ./tsconfig.build.json --outDir ./src/_esm && printf '{\"type\": \"module\",\"sideEffects\":false}' > ./src/_esm/package.json",
-    "build:trustedSetups:start": "mv src/node/trustedSetups.ts src/node/trustedSetups_esm.ts && mv src/node/trustedSetups_cjs.ts src/node/trustedSetups.ts",
-    "build:trustedSetups:end": "mv src/node/trustedSetups.ts src/node/trustedSetups_cjs.ts && mv src/node/trustedSetups_esm.ts src/node/trustedSetups.ts",
     "build:types": "tsc --project ./tsconfig.build.json --declarationDir ./src/_types --emitDeclarationOnly --declaration --declarationMap",
-    "changeset:prepublish": "pnpm version:update && pnpm build && bun scripts/prepublishOnly.ts",
-    "changeset:publish": "pnpm changeset:prepublish && changeset publish",
-    "changeset:version": "pnpm install --lockfile-only && changeset version && pnpm version:update && pnpm check",
     "clean": "rm -rf *.tsbuildinfo src/*.tsbuildinfo src/_esm src/_cjs src/_types",
-    "contracts:build": "forge build --config-path ./contracts/foundry.toml && bun scripts/generateTypedArtifacts.ts",
-    "deps": "pnpx taze -r",
-    "docs:dev": "pnpm --filter site dev",
-    "docs:build": "pnpm --filter site build",
-    "check": "biome check --write --unsafe",
-    "check:repo": "sherif",
     "check:types": "tsc -b",
-    "check:unused": "pnpm clean && knip",
-    "gen:tempo-abis": "bun scripts/generateTempoAbis.ts",
-    "postinstall": "git submodule update --init --recursive && pnpm contracts:build",
-    "preconstruct": "bun scripts/preconstruct.ts",
     "preinstall": "pnpx only-allow pnpm",
     "prepare": "pnpm simple-git-hooks",
-    "prepublishOnly": "bun scripts/prepublishOnly.ts",
-    "size": "size-limit",
     "test": "vitest -c ./test/vitest.config.ts",
-    "test:build": "publint --strict ./src && attw --pack ./src --ignore-rules false-esm",
-    "test:chains": "vitest test/scripts/chains.test.ts",
-    "test:env": "pnpm test:env:bun && pnpm test:env:next && pnpm test:env:node && pnpm test:env:tsc && pnpm test:env:vite",
-    "test:env:bun": "pnpm --filter test-bun test",
-    "test:env:next": "pnpm --filter test-next test",
-    "test:env:node": "pnpm --filter test-node test",
-    "test:env:tsc": "pnpm --filter test-tsc test",
-    "test:env:vite": "pnpm --filter test-vite test",
-    "test:typecheck": "SKIP_GLOBAL_SETUP=true vitest --typecheck.only -c ./test/vitest.config.ts",
-    "test:ui": "vitest dev -c ./test/vitest.config.ts --ui",
-    "vectors": "bun test vectors/**/*.test.ts",
-    "vectors:generate": "bun vectors/generate.ts",
-    "version:update": "bun scripts/updateVersion.ts"
+    "test:typecheck": "SKIP_GLOBAL_SETUP=true vitest --typecheck.only -c ./test/vitest.config.ts"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
@@ -78,8 +88,29 @@
   "engines": {
     "node": ">=24.5"
   },
+  "license": "MIT",
+  "homepage": "https://github.com/tos-network/tosdk",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tos-network/tosdk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tos-network/tosdk/issues"
+  },
+  "authors": [
+    "weth, LLC",
+    "TOS Network"
+  ],
+  "keywords": [
+    "tos",
+    "tos-network",
+    "sdk",
+    "wallet",
+    "agent",
+    "typescript"
+  ],
   "simple-git-hooks": {
-    "pre-commit": "pnpm check"
+    "pre-commit": "pnpm check:types"
   },
   "knip": {
     "ignore": [
@@ -110,134 +141,71 @@
       ]
     },
     "workspaces": {
-      ".": {
-        "project": "scripts/*.ts"
-      },
       "src": {
         "entry": [
           "index.ts!",
-          "{account-abstraction,accounts,actions,celo,chains,ens,experimental,experimental/erc7739,experimental/erc7821,experimental/erc7811,experimental/erc7846,experimental/erc7895,linea,node,nonce,op-stack,siwe,tempo,utils,window,zksync}/index.ts!",
-          "chains/utils.ts!"
+          "accounts/index.ts!",
+          "chains/index.ts!"
         ],
         "ignore": [
           "node/trustedSetups_cjs.ts"
-        ]
-      },
-      "site": {
-        "project": [
-          "**/*.ts",
-          "**/*.tsx"
         ]
       }
     }
   },
   "size-limit": [
     {
-      "name": "import * from 'viem' (esm)",
+      "name": "import * from 'tosdk' (esm)",
       "path": "./src/_esm/index.js",
       "limit": "85 kB",
       "import": "*"
     },
     {
-      "name": "const viem = require('viem') (cjs)",
+      "name": "const tosdk = require('tosdk') (cjs)",
       "path": "./src/_cjs/index.js",
       "limit": "105 kB"
     },
     {
-      "name": "import { createClient, http } from 'viem'",
+      "name": "import { createPublicClient, http } from 'tosdk'",
       "path": "./src/_esm/index.js",
       "limit": "6.6 kB",
-      "import": "{ createClient, http }"
+      "import": "{ createPublicClient, http }"
     },
     {
-      "name": "import * from 'viem/account-abstraction'",
-      "path": "./src/_esm/account-abstraction/index.js",
-      "limit": "60 kB",
-      "import": "*"
-    },
-    {
-      "name": "import * from 'viem/accounts'",
+      "name": "import * from 'tosdk/accounts'",
       "path": "./src/_esm/accounts/index.js",
       "limit": "97 kB",
       "import": "*"
     },
     {
-      "name": "import { privateKeyToAccount } from 'viem/accounts'",
+      "name": "import { privateKeyToAccount } from 'tosdk/accounts'",
       "path": "./src/_esm/accounts/index.js",
       "limit": "22 kB",
       "import": "{ privateKeyToAccount }"
     },
     {
-      "name": "import { mnemonicToAccount } from 'viem/accounts'",
+      "name": "import { mnemonicToAccount } from 'tosdk/accounts'",
       "path": "./src/_esm/accounts/index.js",
       "limit": "30 kB",
       "import": "{ mnemonicToAccount }"
     },
     {
-      "name": "import * from 'viem/actions'",
+      "name": "import * from 'tosdk/actions'",
       "path": "./src/_esm/actions/index.js",
       "limit": "69 kB",
       "import": "*"
     },
     {
-      "name": "import { getBlockNumber } from 'viem/actions'",
+      "name": "import { getBlockNumber } from 'tosdk/actions'",
       "path": "./src/_esm/actions/index.js",
       "limit": "1 kB",
       "import": "{ getBlockNumber }"
     },
     {
-      "name": "import * from 'viem/chains'",
+      "name": "import * from 'tosdk/chains'",
       "path": "./src/_esm/chains/index.js",
       "limit": "100 kB",
       "import": "*"
-    },
-    {
-      "name": "import { mainnet } from 'viem/chains'",
-      "path": "./src/_esm/chains/index.js",
-      "limit": "500 B",
-      "import": "{ mainnet }"
-    },
-    {
-      "name": "import { tempoTestnet } from 'viem/chains'",
-      "path": "./src/_esm/chains/index.js",
-      "limit": "57 kB",
-      "import": "{ tempoTestnet }"
-    },
-    {
-      "name": "import * from 'viem/chains/utils'",
-      "path": "./src/_esm/chains/utils.js",
-      "limit": "8 kB",
-      "import": "*"
-    },
-    {
-      "name": "import * from 'viem/ens'",
-      "path": "./src/_esm/ens/index.js",
-      "limit": "53 kB",
-      "import": "*"
-    },
-    {
-      "name": "import { getEnsAvatar } from 'viem/ens'",
-      "path": "./src/_esm/ens/index.js",
-      "limit": "28 kB",
-      "import": "{ getEnsAvatar }"
-    },
-    {
-      "name": "import * from 'viem/siwe'",
-      "path": "./src/_esm/siwe/index.js",
-      "limit": "49 kB",
-      "import": "*"
-    },
-    {
-      "name": "import { verifySiweMessage } from 'viem/siwe'",
-      "path": "./src/_esm/siwe/index.js",
-      "limit": "48 kB",
-      "import": "{ verifySiweMessage }"
-    },
-    {
-      "name": "import { verifyHash } from 'viem/actions'",
-      "path": "./src/_esm/actions/index.js",
-      "limit": "47 kB",
-      "import": "{ verifyHash }"
     }
   ],
   "pnpm": {
@@ -248,7 +216,6 @@
       "ws@>=7.0.0 <7.5.10": "^7.5.10",
       "hono@<4.5.8": "^4.5.8",
       "micromatch@<4.0.8": "^4.0.8",
-      "permissionless>viem": "workspace:*",
       "send@<0.19.0": "^0.19.0",
       "serve-static@<1.16.0": "^1.16.0",
       "cookie@<0.7.0": "^0.7.0",

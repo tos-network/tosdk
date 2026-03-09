@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { ErrorType } from '../../errors/utils.js'
 import type { Account } from '../../types/account.js'
 import type { AuthorizationList } from '../../types/authorization.js'

@@ -1,8 +1,6 @@
-// @ts-nocheck
 import type { ErrorType } from '../../errors/utils.js'
 import type { Hex } from '../../types/misc.js'
 import type {
-  TransactionSerializable,
   TransactionSerialized,
 } from '../../types/transaction.js'
 import {

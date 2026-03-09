@@ -1,4 +1,3 @@
-// @ts-nocheck
 import type { Address } from 'abitype'
 import type { Account } from '../../accounts/types.js'
 import {
@@ -45,7 +44,6 @@ import type {
   TransactionRequestEIP4844,
   TransactionRequestEIP7702,
   TransactionRequestLegacy,
-  TransactionSerializable,
 } from '../../types/transaction.js'
 import type {
   ExactPartial,
