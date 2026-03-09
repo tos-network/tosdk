@@ -1,4 +1,4 @@
 export type { Chain } from '../types/chain.js'
 
-export { base } from './definitions/base.js'
-export { baseSepolia } from './definitions/baseSepolia.js'
+export { tos } from './definitions/tos.js'
+export { tosTestnet } from './definitions/tosTestnet.js'
