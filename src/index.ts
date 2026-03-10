@@ -1,5 +1,18 @@
 export type { PrivateKeyAccount } from './accounts/types.js'
+export {
+  generatePrivateKey,
+  privateKeyToAccount,
+  hdKeyToAccount,
+  mnemonicToAccount,
+  toAccount,
+} from './accounts/index.js'
 export type { Address } from './types/address.js'
+export type {
+  ArtifactAnchorSummary,
+  ArtifactBundleKind,
+  ArtifactVerificationReceipt,
+  ArtifactVerificationStatus,
+} from './types/artifact.js'
 export type { Chain } from './types/chain.js'
 export type {
   CallPackageParameters,
@@ -12,6 +25,11 @@ export type {
   MarketBindingKind,
   MarketBindingReceipt,
 } from './types/market.js'
+export type {
+  StorageAnchorSummary,
+  StorageReceipt,
+  StorageReceiptStatus,
+} from './types/storage.js'
 export type {
   SettlementKind,
   SettlementReceipt,
@@ -69,11 +87,27 @@ export {
   type Keccak256ErrorType,
 } from './utils/hash/keccak256.js'
 export {
+  canonicalizeArtifactAnchorSummary,
+  canonicalizeArtifactValue,
+  canonicalizeArtifactVerificationReceipt,
+  hashArtifactAnchorSummary,
+  hashArtifactValue,
+  hashArtifactVerificationReceipt,
+} from './utils/artifact.js'
+export {
   canonicalizeMarketBindingReceipt,
   canonicalizeMarketBindingValue,
   hashMarketBindingReceipt,
   hashMarketBindingValue,
 } from './utils/market.js'
+export {
+  canonicalizeStorageAnchorSummary,
+  canonicalizeStorageReceipt,
+  canonicalizeStorageValue,
+  hashStorageAnchorSummary,
+  hashStorageReceipt,
+  hashStorageValue,
+} from './utils/storage.js'
 export {
   canonicalizeSettlementReceipt,
   canonicalizeSettlementValue,
