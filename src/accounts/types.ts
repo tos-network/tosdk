@@ -2,8 +2,11 @@ import type { TypedData } from 'abitype'
 import type { HDKey } from '@scure/bip32'
 
 import type { Address } from '../types/address.js'
-import type { Hash, Hex, SignableMessage } from '../types/misc.js'
-import type { TransactionSerializableNative } from '../types/transaction.js'
+import type { Hash, Hex, SignableMessage, Signature } from '../types/misc.js'
+import type {
+  TransactionSerializableNative,
+  TransactionSerializableSponsored,
+} from '../types/transaction.js'
 import type { TypedDataDefinition } from '../types/typedData.js'
 import type { OneOf, Prettify } from '../types/utils.js'
 
@@ -18,6 +21,9 @@ export type CustomSource = {
   sign?: ((parameters: { hash: Hash }) => Promise<Hex>) | undefined
   signMessage: ({ message }: { message: SignableMessage }) => Promise<Hex>
   signTransaction: (transaction: TransactionSerializableNative) => Promise<Hex>
+  signSponsoredExecution: (
+    transaction: TransactionSerializableSponsored,
+  ) => Promise<Signature>
   signTypedData: <
     const typedData extends TypedData | Record<string, unknown>,
     primaryType extends keyof typedData | 'EIP712Domain' = keyof typedData,

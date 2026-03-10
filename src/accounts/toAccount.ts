@@ -41,6 +41,7 @@ export function toAccount<accountSource extends AccountSource>(
     address: source.address,
     sign: source.sign,
     signMessage: source.signMessage,
+    signSponsoredExecution: source.signSponsoredExecution,
     signTransaction: source.signTransaction,
     signTypedData: source.signTypedData,
     source: 'custom',

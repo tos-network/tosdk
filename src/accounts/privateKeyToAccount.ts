@@ -11,6 +11,10 @@ import {
 import { type SignErrorType, sign } from './utils/sign.js'
 import { type SignMessageErrorType, signMessage } from './utils/signMessage.js'
 import {
+  type SignSponsoredExecutionErrorType,
+  signSponsoredExecution,
+} from './utils/signSponsoredExecution.js'
+import {
   type SignTransactionErrorType,
   signTransaction,
 } from './utils/signTransaction.js'
@@ -25,6 +29,7 @@ export type PrivateKeyToAccountErrorType =
   | PublicKeyToAddressErrorType
   | SignErrorType
   | SignMessageErrorType
+  | SignSponsoredExecutionErrorType
   | SignTransactionErrorType
   | SignTypedDataErrorType
   | ErrorType
@@ -43,6 +48,9 @@ export function privateKeyToAccount(privateKey: Hex): PrivateKeyAccount {
     },
     async signTransaction(transaction) {
       return signTransaction({ privateKey, transaction })
+    },
+    async signSponsoredExecution(transaction) {
+      return signSponsoredExecution({ privateKey, transaction })
     },
     async signTypedData(typedData) {
       return signTypedData({ ...typedData, privateKey } as any)

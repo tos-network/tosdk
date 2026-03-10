@@ -8,7 +8,7 @@ import type {
   PackageArgument,
   SendPackageTransactionParameters,
 } from './contract.js'
-import type { Hex } from './misc.js'
+import type { Hex, Signature } from './misc.js'
 
 export type BlockTag =
   | 'latest'
@@ -247,6 +247,22 @@ export type SignTransactionParameters = {
   signerType?: string | undefined
 }
 
+export type SponsoredTransactionParameters = {
+  account?: PrivateKeyAccount | undefined
+  chainId?: number | bigint | undefined
+  nonce?: number | bigint | undefined
+  gas?: number | bigint | undefined
+  to?: Address | null | undefined
+  value?: number | bigint | undefined
+  data?: Hex | undefined
+  from?: Address | undefined
+  signerType?: string | undefined
+  sponsor: Address
+  sponsorNonce: number | bigint
+  sponsorExpiry: number | bigint
+  sponsorPolicyHash: Hex
+}
+
 export type SendSystemActionParameters = {
   account?: PrivateKeyAccount | undefined
   action: string
@@ -258,8 +274,17 @@ export type SendSystemActionParameters = {
 export type WalletClient = PublicClient & {
   account: PrivateKeyAccount
   signTransaction(parameters: SignTransactionParameters): Promise<Hex>
+  signSponsoredExecution(
+    parameters: SponsoredTransactionParameters,
+  ): Promise<Signature>
+  signSponsoredTransaction(
+    parameters: SponsoredTransactionParameters & { sponsorSignature: Signature },
+  ): Promise<Hex>
   sendRawTransaction(parameters: { serializedTransaction: Hex }): Promise<Hex>
   sendTransaction(parameters: SignTransactionParameters): Promise<Hex>
+  sendSponsoredTransaction(
+    parameters: SponsoredTransactionParameters & { sponsorSignature: Signature },
+  ): Promise<Hex>
   sendPackageTransaction(
     parameters: SendPackageTransactionParameters,
   ): Promise<Hex>
