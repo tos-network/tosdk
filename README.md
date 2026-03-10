@@ -70,6 +70,14 @@ runtime:
 - `createPaymasterProviderClient`
 - `buildPaymasterAuthorizationRequest`
 
+## Examples
+
+Repository examples are available under `examples/`:
+
+- `examples/network-wallet.ts`
+- `examples/provider-clients.ts`
+- `examples/storage-and-artifacts.ts`
+
 ## License
 
 MIT

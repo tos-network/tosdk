@@ -109,6 +109,7 @@ export {
   encodeSystemActionData,
   systemActionAddress,
 } from './clients/index.js'
+export { tos, tosTestnet } from './chains/index.js'
 export {
   http,
   createHttpTransport,
