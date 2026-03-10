@@ -35,6 +35,14 @@ export type {
   SettlementReceipt,
 } from './types/settlement.js'
 export type {
+  SponsoredTransactionSignatureBundle,
+  TransactionSerializable,
+  TransactionSerializableNative,
+  TransactionSerializableSponsored,
+  TransactionSerialized,
+  TransactionType,
+} from './types/transaction.js'
+export type {
   BlockTag,
   FeeHistory,
   HttpTransportConfig,
@@ -134,3 +142,7 @@ export {
 export {
   encodePackageDeployData,
 } from './utils/contract/encodePackageDeployData.js'
+export {
+  serializeTransaction,
+  serializeTransactionSponsored,
+} from './utils/transaction/serializeTransaction.js'

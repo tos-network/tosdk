@@ -5,7 +5,6 @@ import {
 import type { ErrorType } from '../../errors/utils.js'
 import type {
   TransactionSerializableGeneric,
-  TransactionSerializableNative,
 } from '../../types/transaction.js'
 import type { IsNever } from '../../types/utils.js'
 
@@ -26,14 +25,22 @@ export type GetTransactionTypeErrorType =
   | ErrorType
 
 export function getTransactionType<
-  const transaction extends TransactionSerializableNative,
+  const transaction extends TransactionSerializableGeneric,
 >(transaction: transaction): GetTransactionType<transaction> {
+  const tx = transaction as any
   if (
-    transaction.type === 'native' ||
-    (typeof transaction.from !== 'undefined' &&
-      typeof transaction.signerType !== 'undefined')
+    tx.type === 'native' ||
+    (typeof tx.from !== 'undefined' &&
+      typeof tx.signerType !== 'undefined' &&
+      typeof tx.sponsor === 'undefined')
   )
     return 'native' as GetTransactionType<transaction>
+
+  if (
+    tx.type === 'sponsored' ||
+    (typeof tx.sponsor !== 'undefined' && typeof tx.from !== 'undefined')
+  )
+    return 'sponsored' as GetTransactionType<transaction>
 
   throw new InvalidSerializableTransactionError({ transaction })
 }

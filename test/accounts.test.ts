@@ -1,7 +1,12 @@
 import { HDKey } from '@scure/bip32'
 import { describe, expect, test } from 'vitest'
 
-import { toBytes, verifyMessage } from 'tosdk'
+import {
+  serializeTransaction,
+  serializeTransactionSponsored,
+  toBytes,
+  verifyMessage,
+} from 'tosdk'
 import {
   generateMnemonic,
   generatePrivateKey,
@@ -106,6 +111,79 @@ describe('native signing', () => {
       }),
     ).resolves.toBe(
       '0x00f8a182068280825208a0482845ef5f7df661eb71148970997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0a0c1ffd3cfee2d9e5cd67643f8f39fd6e51aad88f6f4ce6ab8827279cfffb9226689736563703235366b311ca00f7d56c78d0f419f2c4bc48efb2897006f6be93dba62bebb0fb21e05f329eaf7a07c4b6c17f310eedaac9bd75169f33f9421653c64b1396dbaf69c25db528c72ff',
+    )
+  })
+
+  test('serializeTransaction routes sponsored transactions to the sponsored envelope', () => {
+    const serialized = serializeTransaction(
+      {
+        chainId: 1666,
+        from: nativeAccounts[0]!.address,
+        gas: 21000n,
+        nonce: 0n,
+        signerType: 'secp256k1',
+        sponsor: nativeAccounts[2]!.address,
+        sponsorExpiry: 1_800_000_000n,
+        sponsorNonce: 7n,
+        sponsorPolicyHash:
+          '0x1111111111111111111111111111111111111111111111111111111111111111',
+        to: nativeAccounts[1]!.address,
+        type: 'sponsored',
+        value: 123n,
+      },
+      {
+        execution: {
+          r: '0x01',
+          s: '0x02',
+          yParity: 1,
+        },
+        sponsor: {
+          r: '0x03',
+          s: '0x04',
+          yParity: 0,
+        },
+      },
+    )
+
+    expect(serialized.startsWith('0x01')).toBe(true)
+    expect(serialized).toContain(
+      nativeAccounts[2]!.address.toLowerCase().slice(2),
+    )
+  })
+
+  test('serializeTransactionSponsored builds a deterministic sponsored envelope', () => {
+    expect(
+      serializeTransactionSponsored(
+        {
+          chainId: 1666,
+          from: nativeAccounts[0]!.address,
+          gas: 21000n,
+          nonce: 0n,
+          signerType: 'secp256k1',
+          sponsor: nativeAccounts[2]!.address,
+          sponsorExpiry: 1_800_000_000n,
+          sponsorNonce: 7n,
+          sponsorPolicyHash:
+            '0x1111111111111111111111111111111111111111111111111111111111111111',
+          to: nativeAccounts[1]!.address,
+          type: 'sponsored',
+          value: 123n,
+        },
+        {
+          execution: {
+            r: '0x01',
+            s: '0x02',
+            yParity: 1,
+          },
+          sponsor: {
+            r: '0x03',
+            s: '0x04',
+            yParity: 0,
+          },
+        },
+      ),
+    ).toBe(
+      '0x01f8a482068200825208a0482845ef5f7df661eb71148970997970c51812dc3a010c7d01b50e0d17dc79c87b80c0a0c1ffd3cfee2d9e5cd67643f8f39fd6e51aad88f6f4ce6ab8827279cfffb9226689736563703235366b31a0f5a7a1de5c98f3df76fc2e153c44cdddb6a900fa2b585dd299e03d12fa4293bc07846b49d200a01111111111111111111111111111111111111111111111111111111111111111010102000304',
     )
   })
 

@@ -15,8 +15,26 @@ export type TransactionSerializableNative = {
   signerType: string
 }
 
-export type TransactionSerializable = TransactionSerializableNative
-export type TransactionSerializableGeneric = TransactionSerializableNative
+export type TransactionSerializableSponsored = {
+  type: 'sponsored'
+  chainId: number | bigint
+  nonce: number | bigint
+  gas: number | bigint
+  to?: Address | null | undefined
+  value: number | bigint
+  data?: Hex | undefined
+  from: Address
+  signerType: string
+  sponsor: Address
+  sponsorNonce: number | bigint
+  sponsorExpiry: number | bigint
+  sponsorPolicyHash: Hex
+}
+
+export type TransactionSerializable =
+  | TransactionSerializableNative
+  | TransactionSerializableSponsored
+export type TransactionSerializableGeneric = TransactionSerializable
 
 export type TransactionSerializedNative = Hex
 export type TransactionSerialized = Hex
@@ -67,3 +85,8 @@ export type TransactionReceipt<
 }
 
 export type SignatureValues = Signature<0 | 1, bigint>
+
+export type SponsoredTransactionSignatureBundle = {
+  execution: Signature
+  sponsor: Signature
+}

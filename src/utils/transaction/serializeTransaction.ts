@@ -4,8 +4,10 @@ import type {
   Signature,
 } from '../../types/misc.js'
 import type {
+  SponsoredTransactionSignatureBundle,
   TransactionSerializable,
   TransactionSerializableNative,
+  TransactionSerializableSponsored,
   TransactionSerializableGeneric,
   TransactionSerialized,
   TransactionSerializedNative,
@@ -20,7 +22,9 @@ import {
 } from '../encoding/toHex.js'
 import { type ToRlpErrorType, toRlp } from '../encoding/toRlp.js'
 import {
+  type AssertTransactionSponsoredErrorType,
   type AssertTransactionNativeErrorType,
+  assertTransactionSponsored,
   assertTransactionNative,
 } from './assertTransaction.js'
 import {
@@ -44,22 +48,40 @@ export type SerializeTransactionFn<
 export type SerializeTransactionErrorType =
   | GetTransactionTypeErrorType
   | SerializeTransactionNativeErrorType
+  | SerializeTransactionSponsoredErrorType
   | ErrorType
 
 export function serializeTransaction(
   transaction: TransactionSerializable,
-  signature?: Signature | undefined,
+  signature?: Signature | SponsoredTransactionSignatureBundle | undefined,
 ): TransactionSerialized {
   const type = getTransactionType(transaction as any) as GetTransactionType
-  if (type !== 'native') throw new Error(`Unsupported transaction type: ${type}`)
-  return serializeTransactionNative(
-    transaction as TransactionSerializableNative,
-    signature,
-  ) as TransactionSerialized
+  if (type === 'native') {
+    if (isSponsoredSignatureBundle(signature))
+      throw new Error('Native transactions do not accept sponsor signatures.')
+    return serializeTransactionNative(
+      transaction as TransactionSerializableNative,
+      signature,
+    ) as TransactionSerialized
+  }
+  if (type === 'sponsored') {
+    return serializeTransactionSponsored(
+      transaction as TransactionSerializableSponsored,
+      isSponsoredSignatureBundle(signature) ? signature : undefined,
+    ) as TransactionSerialized
+  }
+  throw new Error(`Unsupported transaction type: ${type}`)
 }
 
 type SerializeTransactionNativeErrorType =
   | AssertTransactionNativeErrorType
+  | ConcatHexErrorType
+  | NumberToHexErrorType
+  | ToRlpErrorType
+  | ErrorType
+
+export type SerializeTransactionSponsoredErrorType =
+  | AssertTransactionSponsoredErrorType
   | ConcatHexErrorType
   | NumberToHexErrorType
   | ToRlpErrorType
@@ -89,6 +111,48 @@ function serializeTransactionNative(
   return concatHex(['0x00', toRlp(serializedTransaction)]) as TransactionSerializedNative
 }
 
+export function serializeTransactionSponsored(
+  transaction: TransactionSerializableSponsored,
+  signatures?: SponsoredTransactionSignatureBundle | undefined,
+): TransactionSerialized {
+  const {
+    chainId,
+    data,
+    from,
+    gas,
+    nonce,
+    signerType,
+    sponsor,
+    sponsorExpiry,
+    sponsorNonce,
+    sponsorPolicyHash,
+    to,
+    value,
+  } = transaction
+
+  assertTransactionSponsored(transaction)
+
+  const serializedTransaction = [
+    toMinimalQuantityHex(chainId),
+    toMinimalQuantityHex(nonce),
+    toMinimalQuantityHex(gas),
+    to ?? '0x',
+    toMinimalQuantityHex(value),
+    data ?? '0x',
+    [],
+    from,
+    bytesToHex(new TextEncoder().encode(signerType)),
+    sponsor,
+    toMinimalQuantityHex(sponsorNonce),
+    toMinimalQuantityHex(sponsorExpiry),
+    sponsorPolicyHash,
+    ...toNativeSignatureArray(signatures?.execution),
+    ...toNativeSignatureArray(signatures?.sponsor),
+  ]
+
+  return concatHex(['0x01', toRlp(serializedTransaction)]) as TransactionSerialized
+}
+
 function toNativeSignatureArray(signature?: Signature | undefined) {
   if (!signature) return []
   return [
@@ -106,4 +170,15 @@ function toMinimalQuantityHex(value: number | bigint | undefined): Hex {
 function rlpHex(hex: Hex): Hex {
   if (hex === '0x') return hex
   return hex.replace(/^0x0+/, '0x').replace(/^0x$/, '0x0') as Hex
+}
+
+function isSponsoredSignatureBundle(
+  signature: Signature | SponsoredTransactionSignatureBundle | undefined,
+): signature is SponsoredTransactionSignatureBundle {
+  return (
+    typeof signature === 'object' &&
+    signature !== null &&
+    'execution' in signature &&
+    'sponsor' in signature
+  )
 }
