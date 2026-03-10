@@ -11,9 +11,16 @@ export {
 } from './accounts/index.js'
 export type { Address } from './types/address.js'
 export type {
+  ArtifactAnchorRecord,
   ArtifactAnchorSummary,
   ArtifactBundleKind,
+  ArtifactItemResponse,
+  ArtifactProviderRecord,
+  ArtifactRequesterEnvelope,
+  ArtifactVerificationRecord,
   ArtifactVerificationReceipt,
+  CaptureNewsRequest,
+  CaptureOracleEvidenceRequest,
   ArtifactVerificationStatus,
 } from './types/artifact.js'
 export type { Chain } from './types/chain.js'
@@ -29,9 +36,18 @@ export type {
   MarketBindingReceipt,
 } from './types/market.js'
 export type {
+  StoredBundleResponse,
+  StorageAuditResponse,
   StorageAnchorSummary,
+  StorageIdentityEnvelope,
+  StorageLeaseResponse,
+  StoragePutRequest,
+  StorageQuoteRequest,
+  StorageQuoteResponse,
   StorageReceipt,
   StorageReceiptStatus,
+  StorageRenewalResponse,
+  StorageRenewRequest,
 } from './types/storage.js'
 export type {
   SettlementKind,
@@ -70,7 +86,9 @@ export type {
 } from './types/client.js'
 
 export {
+  createArtifactProviderClient,
   createPublicClient,
+  createStorageProviderClient,
   createWalletClient,
   encodeSystemActionData,
   systemActionAddress,
