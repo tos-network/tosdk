@@ -127,6 +127,16 @@ test('public client uses the chain default RPC URL and returns native quantities
         return toHex(7n)
       case 'tos_getSponsorNonce':
         return toHex(9n)
+      case 'tos_getSigner':
+        return {
+          address: nativeAccounts[0]!.address,
+          signer: {
+            type: 'secp256k1',
+            value: nativeAccounts[0]!.address,
+            defaulted: true,
+          },
+          blockNumber: toHex(99n),
+        }
       case 'tos_blockNumber':
         return toHex(99n)
       case 'tos_getBlockByNumber':
@@ -187,6 +197,17 @@ test('public client uses the chain default RPC URL and returns native quantities
   await expect(
     client.getSponsorNonce({ address: nativeAccounts[0]!.address }),
   ).resolves.toBe(9n)
+  await expect(
+    client.getSigner({ address: nativeAccounts[0]!.address }),
+  ).resolves.toEqual({
+    address: nativeAccounts[0]!.address,
+    signer: {
+      type: 'secp256k1',
+      value: nativeAccounts[0]!.address,
+      defaulted: true,
+    },
+    blockNumber: toHex(99n),
+  })
   await expect(client.getBlockNumber()).resolves.toBe(99n)
   await expect(
     client.getBlockByNumber({ blockNumber: 99n, includeTransactions: true }),
@@ -270,14 +291,18 @@ test('public client uses the chain default RPC URL and returns native quantities
     params: [nativeAccounts[0]!.address, 'latest'],
   })
   expect(calls[4]!.request).toMatchObject({
+    method: 'tos_getSigner',
+    params: [nativeAccounts[0]!.address, 'latest'],
+  })
+  expect(calls[5]!.request).toMatchObject({
     method: 'tos_blockNumber',
     params: [],
   })
-  expect(calls[5]!.request).toMatchObject({
+  expect(calls[6]!.request).toMatchObject({
     method: 'tos_getBlockByNumber',
     params: [toHex(99n), true],
   })
-  expect(calls[6]!.request).toMatchObject({
+  expect(calls[7]!.request).toMatchObject({
     method: 'tos_call',
     params: [
       {
@@ -288,15 +313,15 @@ test('public client uses the chain default RPC URL and returns native quantities
       'latest',
     ],
   })
-  expect(calls[7]!.request).toMatchObject({
+  expect(calls[8]!.request).toMatchObject({
     method: 'tos_getCode',
     params: [nativeAccounts[1]!.address, 'latest'],
   })
-  expect(calls[8]!.request).toMatchObject({
+  expect(calls[9]!.request).toMatchObject({
     method: 'tos_getStorageAt',
     params: [nativeAccounts[1]!.address, '0x01', 'latest'],
   })
-  expect(calls[10]!.request).toMatchObject({
+  expect(calls[11]!.request).toMatchObject({
     method: 'tos_getLogs',
     params: [
       {
@@ -307,7 +332,7 @@ test('public client uses the chain default RPC URL and returns native quantities
       },
     ],
   })
-  expect(calls[11]!.request).toMatchObject({
+  expect(calls[12]!.request).toMatchObject({
     method: 'tos_estimateGas',
     params: [
       {
@@ -316,7 +341,7 @@ test('public client uses the chain default RPC URL and returns native quantities
       },
     ],
   })
-  expect(calls[13]!.request).toMatchObject({
+  expect(calls[14]!.request).toMatchObject({
     method: 'tos_feeHistory',
     params: ['0x2', '0x64', [25, 75]],
   })
@@ -497,6 +522,60 @@ test('wallet client sends system actions through the system action address', asy
   })
 
   await expect(client.sendSystemAction(payload)).resolves.toBe('0xcafe')
+
+  expect(calls[2]!.request).toMatchObject({
+    method: 'tos_sendRawTransaction',
+    params: [expectedSerialized],
+  })
+})
+
+test('wallet client bootstraps signer metadata through ACCOUNT_SET_SIGNER', async () => {
+  const account = privateKeyToAccount(accounts[0]!.privateKey)
+  const expectedSerialized = await account.signTransaction({
+    chainId: BigInt(tosTestnet.id),
+    data: encodeSystemActionData({
+      action: 'ACCOUNT_SET_SIGNER',
+      payload: {
+        signerType: 'ed25519',
+        signerValue:
+          '0x1111111111111111111111111111111111111111111111111111111111111111',
+      },
+    }),
+    from: account.address,
+    gas: 120_000n,
+    nonce: 4n,
+    signerType: 'secp256k1',
+    to: systemActionAddress,
+    type: 'native',
+    value: 0n,
+  })
+
+  const { calls, fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'tos_chainId':
+        return toHex(tosTestnet.id)
+      case 'tos_getTransactionCount':
+        return toHex(4n)
+      case 'tos_sendRawTransaction':
+        return '0xbead'
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createWalletClient({
+    account,
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  await expect(
+    client.setSignerMetadata({
+      signerType: 'ed25519',
+      signerValue:
+        '0x1111111111111111111111111111111111111111111111111111111111111111',
+    }),
+  ).resolves.toBe('0xbead')
 
   expect(calls[2]!.request).toMatchObject({
     method: 'tos_sendRawTransaction',

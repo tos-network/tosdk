@@ -76,6 +76,18 @@ export type FeeHistory = {
   gasUsedRatio: number[]
 }
 
+export type RpcSignerDescriptor = {
+  type: string
+  value: Hex
+  defaulted: boolean
+}
+
+export type RpcSignerProfile = {
+  address: Address
+  signer: RpcSignerDescriptor
+  blockNumber?: Hex | null | undefined
+}
+
 export type RpcTransactionReceipt = {
   blockHash: Hex
   blockNumber: Hex
@@ -183,6 +195,10 @@ export type PublicClient = {
     address: Address
     blockTag?: BlockTag | undefined
   }): Promise<bigint>
+  getSigner(parameters: {
+    address: Address
+    blockTag?: BlockTag | undefined
+  }): Promise<RpcSignerProfile>
   getTransactionReceipt(parameters: {
     hash: Hex
   }): Promise<RpcTransactionReceipt | null>
@@ -265,6 +281,13 @@ export type SendSystemActionParameters = {
   value?: number | bigint | undefined
 }
 
+export type SetSignerMetadataParameters = {
+  account?: LocalAccount | undefined
+  signerType: string
+  signerValue: Hex
+  gas?: number | bigint | undefined
+}
+
 export type WalletClient = PublicClient & {
   account: LocalAccount
   signAuthorization(parameters: SignTransactionParameters): Promise<Signature>
@@ -282,6 +305,7 @@ export type WalletClient = PublicClient & {
   ): Promise<Hex>
   deployPackage(parameters: DeployPackageParameters): Promise<Hex>
   sendSystemAction(parameters: SendSystemActionParameters): Promise<Hex>
+  setSignerMetadata(parameters: SetSignerMetadataParameters): Promise<Hex>
 }
 
 export type {

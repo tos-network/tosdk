@@ -13,6 +13,7 @@ import type {
   RpcBlock,
   RpcLog,
   RpcSubscription,
+  RpcSignerProfile,
   RpcTransaction,
   RpcTransactionReceipt,
   RpcTransactionRequest,
@@ -102,6 +103,12 @@ export function createPublicClient(
           normalizeBlockTag(blockTag),
         ]),
       )
+    },
+    async getSigner({ address, blockTag = 'latest' }) {
+      return request<RpcSignerProfile>('tos_getSigner', [
+        getAddress(address),
+        normalizeBlockTag(blockTag),
+      ])
     },
     async getTransactionReceipt({ hash }) {
       return request<RpcTransactionReceipt | null>('tos_getTransactionReceipt', [hash])

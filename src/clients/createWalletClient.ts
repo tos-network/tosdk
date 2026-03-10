@@ -2,6 +2,7 @@ import type { ErrorType } from '../errors/utils.js'
 import type {
   DeployPackageParameters,
   SendPackageTransactionParameters,
+  SetSignerMetadataParameters,
   SendSystemActionParameters,
   SignTransactionParameters,
   WalletClient,
@@ -184,6 +185,23 @@ export function createWalletClient(config: WalletClientConfig): WalletClient {
       value,
     })
 
+  const setSignerMetadata = async ({
+    account = config.account,
+    signerType,
+    signerValue,
+    gas = 120_000n,
+  }: SetSignerMetadataParameters) =>
+    sendSystemAction({
+      account,
+      action: 'ACCOUNT_SET_SIGNER',
+      payload: {
+        signerType,
+        signerValue,
+      },
+      gas,
+      value: 0n,
+    })
+
   return {
     ...publicClient,
     account: config.account,
@@ -195,6 +213,7 @@ export function createWalletClient(config: WalletClientConfig): WalletClient {
     sendPackageTransaction,
     deployPackage,
     sendSystemAction,
+    setSignerMetadata,
   }
 }
 
