@@ -10,6 +10,14 @@ export {
   serializeSignature,
 } from '../utils/signature/serializeSignature.js'
 export {
+  type BLS12381PrivateKeyToAccountErrorType,
+  bls12381PrivateKeyToAccount,
+} from './bls12381PrivateKeyToAccount.js'
+export {
+  type ElgamalPrivateKeyToAccountErrorType,
+  elgamalPrivateKeyToAccount,
+} from './elgamalPrivateKeyToAccount.js'
+export {
   type GenerateMnemonicErrorType,
   generateMnemonic,
 } from './generateMnemonic.js'
@@ -31,6 +39,10 @@ export {
   type PrivateKeyToAccountErrorType,
   privateKeyToAccount,
 } from './privateKeyToAccount.js'
+export {
+  type Secp256r1PrivateKeyToAccountErrorType,
+  secp256r1PrivateKeyToAccount,
+} from './secp256r1PrivateKeyToAccount.js'
 export { type ToAccountErrorType, toAccount } from './toAccount.js'
 export type {
   Account,
@@ -53,6 +65,7 @@ export {
 export {
   type PublicKeyToAddressErrorType,
   publicKeyToAddress,
+  signerPublicKeyToAddress,
 } from './utils/publicKeyToAddress.js'
 export {
   type SignErrorType,
@@ -84,6 +97,21 @@ export {
   type SignTypedDataReturnType,
   signTypedData,
 } from './utils/signTypedData.js'
+export {
+  blsSignatureDst,
+  elgamalPublicKeyFromPrivateKey,
+  normalizeSignerType,
+  publicKeyToNativeAddress,
+  signatureToRawBytes,
+  type NormalizeSignerTypeErrorType,
+  type PublicKeyToNativeAddressErrorType,
+  type SignHashParameters,
+  type SignHashReturnType,
+  type VerifyHashSignatureErrorType,
+  type VerifyHashSignatureParameters,
+  signHash,
+  verifyHashSignature,
+} from './utils/nativeSigner.js'
 export {
   czech,
   english,

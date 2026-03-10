@@ -14,6 +14,8 @@ export type SignTypedDataParameters<
 > = TypedDataDefinition<typedData, primaryType> & {
   /** The private key to sign with. */
   privateKey: Hex
+  /** The signer type to use. */
+  signerType?: string | undefined
 }
 
 export type SignTypedDataReturnType = Hex
@@ -35,11 +37,12 @@ export async function signTypedData<
 >(
   parameters: SignTypedDataParameters<typedData, primaryType>,
 ): Promise<SignTypedDataReturnType> {
-  const { privateKey, ...typedData } =
+  const { privateKey, signerType, ...typedData } =
     parameters as unknown as SignTypedDataParameters
   return await sign({
     hash: hashTypedData(typedData),
     privateKey,
+    signerType,
     to: 'hex',
   })
 }

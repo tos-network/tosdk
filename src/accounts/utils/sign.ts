@@ -1,25 +1,19 @@
 // TODO(v3): Convert to sync.
 
-import { secp256k1 } from '@noble/curves/secp256k1'
-
 import type { ErrorType } from '../../errors/utils.js'
 import type { ByteArray, Hex, Signature } from '../../types/misc.js'
-import { type IsHexErrorType, isHex } from '../../utils/data/isHex.js'
-import {
-  type HexToBytesErrorType,
-  hexToBytes,
-} from '../../utils/encoding/toBytes.js'
-import {
-  type NumberToHexErrorType,
-  numberToHex,
-} from '../../utils/encoding/toHex.js'
-import { serializeSignature } from '../../utils/signature/serializeSignature.js'
+import type { IsHexErrorType } from '../../utils/data/isHex.js'
+import { type HexToBytesErrorType } from '../../utils/encoding/toBytes.js'
+import { type NumberToHexErrorType } from '../../utils/encoding/toHex.js'
+
+import { signHash } from './nativeSigner.js'
 
 type To = 'object' | 'bytes' | 'hex'
 
 export type SignParameters<to extends To = 'object'> = {
   hash: Hex
   privateKey: Hex
+  signerType?: string | undefined
   to?: to | To | undefined
 }
 
@@ -55,27 +49,14 @@ export function setSignEntropy(entropy: true | Hex) {
 export async function sign<to extends To = 'object'>({
   hash,
   privateKey,
+  signerType,
   to = 'object',
 }: SignParameters<to>): Promise<SignReturnType<to>> {
-  const { r, s, recovery } = secp256k1.sign(
-    hash.slice(2),
-    privateKey.slice(2),
-    {
-      lowS: true,
-      extraEntropy: isHex(extraEntropy, { strict: false })
-        ? hexToBytes(extraEntropy)
-        : extraEntropy,
-    },
-  )
-  const signature = {
-    r: numberToHex(r, { size: 32 }),
-    s: numberToHex(s, { size: 32 }),
-    v: recovery ? 28n : 27n,
-    yParity: recovery,
-  }
-  return (() => {
-    if (to === 'bytes' || to === 'hex')
-      return serializeSignature({ ...signature, to })
-    return signature
-  })() as SignReturnType<to>
+  return signHash({
+    hash,
+    privateKey,
+    signerType,
+    to,
+    extraEntropy,
+  }) as Promise<SignReturnType<to>>
 }

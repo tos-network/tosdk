@@ -7,6 +7,8 @@ import {
   verifyMessage,
 } from 'tosdk'
 import {
+  bls12381PrivateKeyToAccount,
+  elgamalPrivateKeyToAccount,
   generateMnemonic,
   generatePrivateKey,
   hdKeyToAccount,
@@ -15,14 +17,21 @@ import {
   privateKeyToAccount,
   privateKeyToAddress,
   publicKeyToAddress,
+  secp256r1PrivateKeyToAccount,
+  signerPublicKeyToAddress,
   signMessage,
   signTransaction,
   signTypedData,
   toAccount,
+  verifyHashSignature,
 } from 'tosdk/accounts'
 
 import { accounts } from './src/constants.js'
-import { nativeAccounts, nativeTypedData } from './src/nativeFixtures.js'
+import {
+  nativeAccounts,
+  nativeSignerVectors,
+  nativeTypedData,
+} from './src/nativeFixtures.js'
 
 test('generatePrivateKey returns a 32-byte hex key', () => {
   expect(generatePrivateKey()).toMatch(/^0x[0-9a-f]{64}$/u)
@@ -196,5 +205,67 @@ describe('native signing', () => {
     ).resolves.toBe(
       '0x35c65cdb26d85929ba5aa38c680dd1c038d7351a7ad6a3aee8f1a68606bbcffc3c49937ea645d94705afa42f5000f32cc6b76b6ddeee1762bc0230ce5c2927591b',
     )
+  })
+})
+
+describe('native signer parity', () => {
+  test('derives secp256r1 address from the gtos vector', () => {
+    const account = secp256r1PrivateKeyToAccount(nativeSignerVectors.secp256r1.privateKey)
+    expect(account.publicKey).toBe(nativeSignerVectors.secp256r1.publicKey)
+    expect(account.address).toBe(nativeSignerVectors.secp256r1.address)
+    expect(
+      signerPublicKeyToAddress(account.publicKey, account.signerType),
+    ).toBe(account.address)
+  })
+
+  test('derives bls12-381 address from the gtos vector', () => {
+    const account = bls12381PrivateKeyToAccount(nativeSignerVectors.bls12381.privateKey)
+    expect(account.publicKey).toBe(nativeSignerVectors.bls12381.publicKey)
+    expect(account.address).toBe(nativeSignerVectors.bls12381.address)
+    expect(
+      signerPublicKeyToAddress(account.publicKey, account.signerType),
+    ).toBe(account.address)
+  })
+
+  test('derives elgamal address from the gtos vector', () => {
+    const account = elgamalPrivateKeyToAccount(nativeSignerVectors.elgamal.privateKey)
+    expect(account.publicKey).toBe(nativeSignerVectors.elgamal.publicKey)
+    expect(account.address).toBe(nativeSignerVectors.elgamal.address)
+    expect(
+      signerPublicKeyToAddress(account.publicKey, account.signerType),
+    ).toBe(account.address)
+  })
+
+  test('verifies gtos secp256r1 signature vector', async () => {
+    await expect(
+      verifyHashSignature({
+        hash: nativeSignerVectors.hash,
+        publicKey: nativeSignerVectors.secp256r1.publicKey,
+        signerType: 'secp256r1',
+        signature: nativeSignerVectors.secp256r1.signature,
+      }),
+    ).resolves.toBe(true)
+  })
+
+  test('verifies gtos bls12-381 signature vector', async () => {
+    await expect(
+      verifyHashSignature({
+        hash: nativeSignerVectors.hash,
+        publicKey: nativeSignerVectors.bls12381.publicKey,
+        signerType: 'bls12-381',
+        signature: nativeSignerVectors.bls12381.signature,
+      }),
+    ).resolves.toBe(true)
+  })
+
+  test('verifies gtos elgamal signature vector', async () => {
+    await expect(
+      verifyHashSignature({
+        hash: nativeSignerVectors.hash,
+        publicKey: nativeSignerVectors.elgamal.publicKey,
+        signerType: 'elgamal',
+        signature: nativeSignerVectors.elgamal.signature,
+      }),
+    ).resolves.toBe(true)
   })
 })

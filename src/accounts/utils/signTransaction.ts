@@ -19,6 +19,7 @@ export type SignTransactionParameters<
   transaction extends Parameters<serializer>[0] = Parameters<serializer>[0],
 > = {
   privateKey: Hex
+  signerType?: string | undefined
   transaction: transaction
   serializer?: serializer | undefined
 }
@@ -38,6 +39,7 @@ export async function signTransaction<
 ): Promise<SignTransactionReturnType> {
   const {
     privateKey,
+    signerType,
     transaction,
     serializer = serializeTransaction as SerializeTransactionFn<any>,
   } = parameters
@@ -45,6 +47,7 @@ export async function signTransaction<
   const signature = await sign({
     hash: keccak256(await serializer(transaction as any)),
     privateKey,
+    signerType,
   })
   return (await serializer(
     transaction as any,

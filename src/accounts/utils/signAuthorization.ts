@@ -11,6 +11,7 @@ import { type SignErrorType, sign } from './sign.js'
 export type SignAuthorizationParameters = {
   privateKey: `0x${string}`
   transaction: TransactionSerializableNative
+  signerType?: string | undefined
 }
 
 export type SignAuthorizationErrorType =
@@ -21,10 +22,11 @@ export type SignAuthorizationErrorType =
 export async function signAuthorization(
   parameters: SignAuthorizationParameters,
 ): Promise<Signature> {
-  const { privateKey, transaction } = parameters
+  const { privateKey, transaction, signerType } = parameters
   return sign({
     hash: hashTransaction(transaction),
     privateKey,
+    signerType,
     to: 'object',
   })
 }

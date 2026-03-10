@@ -3,15 +3,16 @@ import type { Address } from '../../types/address.js'
 import type { Hex } from '../../types/misc.js'
 import {
   type GetAddressErrorType,
-  getAddress,
 } from '../../utils/address/getAddress.js'
+import { type Keccak256ErrorType } from '../../utils/hash/keccak256.js'
 import {
-  type Keccak256ErrorType,
-  keccak256,
-} from '../../utils/hash/keccak256.js'
+  publicKeyToNativeAddress,
+  type PublicKeyToNativeAddressErrorType,
+} from './nativeSigner.js'
 export type PublicKeyToAddressErrorType =
   | GetAddressErrorType
   | Keccak256ErrorType
+  | PublicKeyToNativeAddressErrorType
   | ErrorType
 
 /**
@@ -22,6 +23,12 @@ export type PublicKeyToAddressErrorType =
  * @returns The address.
  */
 export function publicKeyToAddress(publicKey: Hex): Address {
-  const digest = keccak256(`0x${publicKey.substring(4)}`)
-  return getAddress(digest)
+  return publicKeyToNativeAddress({ publicKey, signerType: 'secp256k1' })
+}
+
+export function signerPublicKeyToAddress(
+  publicKey: Hex,
+  signerType?: string,
+): Address {
+  return publicKeyToNativeAddress({ publicKey, signerType })
 }

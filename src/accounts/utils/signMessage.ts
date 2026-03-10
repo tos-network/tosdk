@@ -12,6 +12,8 @@ export type SignMessageParameters = {
   message: SignableMessage
   /** The private key to sign with. */
   privateKey: Hex
+  /** The signer type to use. */
+  signerType?: string | undefined
 }
 
 export type SignMessageReturnType = Hex
@@ -29,6 +31,12 @@ export type SignMessageErrorType =
 export async function signMessage({
   message,
   privateKey,
+  signerType,
 }: SignMessageParameters): Promise<SignMessageReturnType> {
-  return await sign({ hash: hashMessage(message), privateKey, to: 'hex' })
+  return await sign({
+    hash: hashMessage(message),
+    privateKey,
+    signerType,
+    to: 'hex',
+  })
 }

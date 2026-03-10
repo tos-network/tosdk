@@ -1,7 +1,10 @@
 export type { LocalAccount, PrivateKeyAccount } from './accounts/types.js'
 export {
+  bls12381PrivateKeyToAccount,
+  elgamalPrivateKeyToAccount,
   generatePrivateKey,
   privateKeyToAccount,
+  secp256r1PrivateKeyToAccount,
   hdKeyToAccount,
   mnemonicToAccount,
   toAccount,
@@ -124,6 +127,15 @@ export {
   recoverAddress,
   type RecoverAddressErrorType,
 } from './utils/signature/recoverAddress.js'
+export {
+  blsSignatureDst,
+  elgamalPublicKeyFromPrivateKey,
+  normalizeSignerType,
+  publicKeyToNativeAddress,
+  signHash,
+  signatureToRawBytes,
+  verifyHashSignature,
+} from './accounts/utils/nativeSigner.js'
 export {
   verifyMessage,
   type VerifyMessageErrorType,
