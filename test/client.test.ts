@@ -400,6 +400,61 @@ test('wallet client signs and broadcasts native transactions', async () => {
   expect(calls[2]!.request.params[0]).toBe(expectedSerialized)
 })
 
+test('wallet client uses the local account signerType when none is passed explicitly', async () => {
+  const baseAccount = privateKeyToAccount(accounts[0]!.privateKey)
+  const customAccount = {
+    ...baseAccount,
+    signerType: 'ed25519',
+    signAuthorization: vi.fn(baseAccount.signAuthorization),
+  }
+
+  const client = createWalletClient({
+    account: customAccount,
+    chain: tosTestnet,
+    transport: http(tosTestnet.rpcUrls.default.http[0], {
+      fetchFn: vi.fn(async (_input, init) => {
+        const request = JSON.parse(String(init?.body)) as RpcRequestPayload
+        switch (request.method) {
+          case 'tos_chainId':
+            return new Response(
+              JSON.stringify({
+                id: request.id,
+                jsonrpc: '2.0',
+                result: toHex(tosTestnet.id),
+              }),
+              { headers: { 'content-type': 'application/json' }, status: 200 },
+            )
+          case 'tos_getTransactionCount':
+            return new Response(
+              JSON.stringify({
+                id: request.id,
+                jsonrpc: '2.0',
+                result: toHex(1n),
+              }),
+              { headers: { 'content-type': 'application/json' }, status: 200 },
+            )
+          default:
+            throw new Error(`Unexpected method: ${request.method}`)
+        }
+      }),
+    }),
+  })
+
+  await client.signAuthorization({
+    to: nativeAccounts[1]!.address,
+    value: 1n,
+  })
+
+  expect(customAccount.signAuthorization).toHaveBeenCalledTimes(1)
+  expect(customAccount.signAuthorization.mock.calls[0]![0]).toMatchObject({
+    from: customAccount.address,
+    nonce: 1n,
+    signerType: 'ed25519',
+    to: nativeAccounts[1]!.address,
+    value: 1n,
+  })
+})
+
 test('wallet client sends system actions through the system action address', async () => {
   const account = privateKeyToAccount(accounts[0]!.privateKey)
   const payload = {

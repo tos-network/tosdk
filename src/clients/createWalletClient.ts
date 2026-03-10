@@ -10,6 +10,7 @@ import type {
 import type { Address } from '../types/address.js'
 import type { Hex, Signature } from '../types/misc.js'
 import type { TransactionSerializableNative } from '../types/transaction.js'
+import type { LocalAccount } from '../accounts/types.js'
 import { toHex, type ToHexErrorType } from '../utils/encoding/toHex.js'
 import { encodePackageCallData } from '../utils/contract/encodePackageCallData.js'
 import { encodePackageDeployData } from '../utils/contract/encodePackageDeployData.js'
@@ -32,6 +33,10 @@ export function createWalletClient(config: WalletClientConfig): WalletClient {
   const sendRawTransaction = ({ serializedTransaction }: { serializedTransaction: Hex }) =>
     publicClient.request<Hex>('tos_sendRawTransaction', [serializedTransaction])
 
+  const resolveAccount = (
+    account: LocalAccount | undefined,
+  ): LocalAccount => account ?? config.account
+
   const buildTransaction = async ({
     account = config.account,
     chainId,
@@ -41,14 +46,16 @@ export function createWalletClient(config: WalletClientConfig): WalletClient {
     value = 0n,
     data = '0x',
     from,
-    signerType = 'secp256k1',
+    signerType,
     sponsor,
     sponsorSignerType,
     sponsorNonce,
     sponsorExpiry,
     sponsorPolicyHash,
   }: SignTransactionParameters): Promise<TransactionSerializableNative> => {
-    const resolvedFrom = getAddress(from ?? account.address)
+    const resolvedAccount = resolveAccount(account)
+    const resolvedSignerType = signerType ?? resolvedAccount.signerType ?? 'secp256k1'
+    const resolvedFrom = getAddress(from ?? resolvedAccount.address)
     const needsSponsorNonce = typeof sponsor !== 'undefined' && typeof sponsorNonce === 'undefined'
     const [resolvedChainId, resolvedNonce, resolvedSponsorNonce] = await Promise.all([
       typeof chainId === 'undefined' ? publicClient.getChainId() : BigInt(chainId),
@@ -74,7 +81,7 @@ export function createWalletClient(config: WalletClientConfig): WalletClient {
       from: resolvedFrom,
       gas: BigInt(gas),
       nonce: resolvedNonce,
-      signerType,
+      signerType: resolvedSignerType,
       ...(typeof sponsor !== 'undefined'
         ? {
             sponsor: getAddress(sponsor),
@@ -92,7 +99,7 @@ export function createWalletClient(config: WalletClientConfig): WalletClient {
   const signAuthorization = async (
     parameters: SignTransactionParameters,
   ): Promise<Signature> => {
-    const account = parameters.account ?? config.account
+    const account = resolveAccount(parameters.account)
     return account.signAuthorization(await buildTransaction(parameters))
   }
 
@@ -115,7 +122,7 @@ export function createWalletClient(config: WalletClientConfig): WalletClient {
     parameters: SignTransactionParameters,
   ): Promise<Hex> => {
     const transaction = await buildTransaction(parameters)
-    const executionSignature = await (parameters.account ?? config.account)
+    const executionSignature = await resolveAccount(parameters.account)
       .signAuthorization(transaction)
     if (transaction.sponsor && !parameters.sponsorSignature) {
       throw new Error(

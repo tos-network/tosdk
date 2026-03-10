@@ -1,4 +1,4 @@
-export type { PrivateKeyAccount } from './accounts/types.js'
+export type { LocalAccount, PrivateKeyAccount } from './accounts/types.js'
 export {
   generatePrivateKey,
   privateKeyToAccount,

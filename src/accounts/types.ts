@@ -15,6 +15,7 @@ export type AccountSource = Address | CustomSource
 
 export type CustomSource = {
   address: Address
+  signerType?: string | undefined
   sign?: ((parameters: { hash: Hash }) => Promise<Hex>) | undefined
   signMessage: ({ message }: { message: SignableMessage }) => Promise<Hex>
   signAuthorization: (
@@ -41,6 +42,7 @@ export type LocalAccount<
   CustomSource & {
     address: address
     publicKey: Hex
+    signerType: string
     source: source
     type: 'local'
   }

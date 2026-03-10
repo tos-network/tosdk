@@ -1,4 +1,4 @@
-import type { PrivateKeyAccount } from '../accounts/types.js'
+import type { LocalAccount } from '../accounts/types.js'
 
 import type { Address } from './address.js'
 import type { Chain } from './chain.js'
@@ -236,11 +236,11 @@ export type PublicClient = {
 }
 
 export type WalletClientConfig = PublicClientConfig & {
-  account: PrivateKeyAccount
+  account: LocalAccount
 }
 
 export type SignTransactionParameters = {
-  account?: PrivateKeyAccount | undefined
+  account?: LocalAccount | undefined
   chainId?: number | bigint | undefined
   nonce?: number | bigint | undefined
   gas?: number | bigint | undefined
@@ -258,7 +258,7 @@ export type SignTransactionParameters = {
 }
 
 export type SendSystemActionParameters = {
-  account?: PrivateKeyAccount | undefined
+  account?: LocalAccount | undefined
   action: string
   payload?: Record<string, unknown> | undefined
   gas?: number | bigint | undefined
@@ -266,7 +266,7 @@ export type SendSystemActionParameters = {
 }
 
 export type WalletClient = PublicClient & {
-  account: PrivateKeyAccount
+  account: LocalAccount
   signAuthorization(parameters: SignTransactionParameters): Promise<Signature>
   assembleTransaction(
     parameters: SignTransactionParameters & {

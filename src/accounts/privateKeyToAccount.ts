@@ -60,6 +60,7 @@ export function privateKeyToAccount(privateKey: Hex): PrivateKeyAccount {
   return {
     ...account,
     publicKey,
+    signerType: 'secp256k1',
     source: 'privateKey',
   } as PrivateKeyAccount
 }
