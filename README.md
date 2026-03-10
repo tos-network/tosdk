@@ -18,6 +18,7 @@ This repository is a native TypeScript SDK for TOS Network. It focuses on native
 - Native transaction typing, serialization, and signing
 - Typed data signing on top of the 32-byte account model
 - Public and wallet clients for TOS RPC
+- Reusable requester-side clients for storage, artifact, signer-provider, and paymaster-provider services
 - Native-only tests for accounts, signing, encoding, chains, clients, and utilities
 
 ## Scope
@@ -56,6 +57,18 @@ const hash = await walletClient.sendTransaction({
 
 console.log(hash)
 ```
+
+## Provider Client Surfaces
+
+`tosdk` also exposes reusable requester-side service clients so third-party
+builders can talk to OpenFox-style providers without depending on the full
+runtime:
+
+- `createStorageProviderClient`
+- `createArtifactProviderClient`
+- `createSignerProviderClient`
+- `createPaymasterProviderClient`
+- `buildPaymasterAuthorizationRequest`
 
 ## License
 

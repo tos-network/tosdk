@@ -23,6 +23,19 @@ export type {
   CaptureOracleEvidenceRequest,
   ArtifactVerificationStatus,
 } from './types/artifact.js'
+export type {
+  PaymasterAuthorizationResponse,
+  PaymasterAuthorizeRequest,
+  PaymasterProviderTrustTier,
+  PaymasterQuoteRequest,
+  PaymasterQuoteResponse,
+  RequesterIdentityEnvelope,
+  SignerExecutionResponse,
+  SignerProviderTrustTier,
+  SignerQuoteRequest,
+  SignerQuoteResponse,
+  SignerSubmitRequest,
+} from './types/delegation.js'
 export type { Chain } from './types/chain.js'
 export type {
   CallPackageParameters,
@@ -87,7 +100,10 @@ export type {
 
 export {
   createArtifactProviderClient,
+  buildPaymasterAuthorizationRequest,
+  createPaymasterProviderClient,
   createPublicClient,
+  createSignerProviderClient,
   createStorageProviderClient,
   createWalletClient,
   encodeSystemActionData,
