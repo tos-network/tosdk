@@ -123,6 +123,10 @@ export {
   hashSettlementValue,
 } from './utils/settlement.js'
 export {
+  recoverAddress,
+  type RecoverAddressErrorType,
+} from './utils/signature/recoverAddress.js'
+export {
   verifyMessage,
   type VerifyMessageErrorType,
 } from './utils/signature/verifyMessage.js'
@@ -142,6 +146,10 @@ export {
 export {
   encodePackageDeployData,
 } from './utils/contract/encodePackageDeployData.js'
+export {
+  hashTransaction,
+  type HashTransactionErrorType,
+} from './utils/transaction/hashTransaction.js'
 export {
   serializeTransaction,
   serializeTransactionSponsored,

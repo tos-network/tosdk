@@ -95,6 +95,14 @@ export function createPublicClient(
         ]),
       )
     },
+    async getSponsorNonce({ address, blockTag = 'latest' }) {
+      return parseRpcQuantity(
+        await request<Hex>('tos_getSponsorNonce', [
+          getAddress(address),
+          normalizeBlockTag(blockTag),
+        ]),
+      )
+    },
     async getTransactionReceipt({ hash }) {
       return request<RpcTransactionReceipt | null>('tos_getTransactionReceipt', [hash])
     },

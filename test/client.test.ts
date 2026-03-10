@@ -125,6 +125,8 @@ test('public client uses the chain default RPC URL and returns native quantities
         return toHex(42n)
       case 'tos_getTransactionCount':
         return toHex(7n)
+      case 'tos_getSponsorNonce':
+        return toHex(9n)
       case 'tos_blockNumber':
         return toHex(99n)
       case 'tos_getBlockByNumber':
@@ -182,6 +184,9 @@ test('public client uses the chain default RPC URL and returns native quantities
   await expect(
     client.getTransactionCount({ address: nativeAccounts[0]!.address }),
   ).resolves.toBe(7n)
+  await expect(
+    client.getSponsorNonce({ address: nativeAccounts[0]!.address }),
+  ).resolves.toBe(9n)
   await expect(client.getBlockNumber()).resolves.toBe(99n)
   await expect(
     client.getBlockByNumber({ blockNumber: 99n, includeTransactions: true }),
@@ -260,11 +265,19 @@ test('public client uses the chain default RPC URL and returns native quantities
     method: 'tos_getTransactionCount',
     params: [nativeAccounts[0]!.address, 'pending'],
   })
+  expect(calls[3]!.request).toMatchObject({
+    method: 'tos_getSponsorNonce',
+    params: [nativeAccounts[0]!.address, 'latest'],
+  })
   expect(calls[4]!.request).toMatchObject({
+    method: 'tos_blockNumber',
+    params: [],
+  })
+  expect(calls[5]!.request).toMatchObject({
     method: 'tos_getBlockByNumber',
     params: [toHex(99n), true],
   })
-  expect(calls[5]!.request).toMatchObject({
+  expect(calls[6]!.request).toMatchObject({
     method: 'tos_call',
     params: [
       {
@@ -275,15 +288,15 @@ test('public client uses the chain default RPC URL and returns native quantities
       'latest',
     ],
   })
-  expect(calls[6]!.request).toMatchObject({
+  expect(calls[7]!.request).toMatchObject({
     method: 'tos_getCode',
     params: [nativeAccounts[1]!.address, 'latest'],
   })
-  expect(calls[7]!.request).toMatchObject({
+  expect(calls[8]!.request).toMatchObject({
     method: 'tos_getStorageAt',
     params: [nativeAccounts[1]!.address, '0x01', 'latest'],
   })
-  expect(calls[9]!.request).toMatchObject({
+  expect(calls[10]!.request).toMatchObject({
     method: 'tos_getLogs',
     params: [
       {
@@ -294,7 +307,7 @@ test('public client uses the chain default RPC URL and returns native quantities
       },
     ],
   })
-  expect(calls[10]!.request).toMatchObject({
+  expect(calls[11]!.request).toMatchObject({
     method: 'tos_estimateGas',
     params: [
       {
@@ -303,7 +316,7 @@ test('public client uses the chain default RPC URL and returns native quantities
       },
     ],
   })
-  expect(calls[12]!.request).toMatchObject({
+  expect(calls[13]!.request).toMatchObject({
     method: 'tos_feeHistory',
     params: ['0x2', '0x64', [25, 75]],
   })

@@ -179,6 +179,10 @@ export type PublicClient = {
     address: Address
     blockTag?: BlockTag | undefined
   }): Promise<bigint>
+  getSponsorNonce(parameters: {
+    address: Address
+    blockTag?: BlockTag | undefined
+  }): Promise<bigint>
   getTransactionReceipt(parameters: {
     hash: Hex
   }): Promise<RpcTransactionReceipt | null>
