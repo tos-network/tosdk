@@ -68,10 +68,10 @@ export {
   signMessage,
 } from './utils/signMessage.js'
 export {
-  type SignSponsoredExecutionErrorType,
-  type SignSponsoredExecutionParameters,
-  signSponsoredExecution,
-} from './utils/signSponsoredExecution.js'
+  type SignAuthorizationErrorType,
+  type SignAuthorizationParameters,
+  signAuthorization,
+} from './utils/signAuthorization.js'
 export {
   type SignTransactionErrorType,
   type SignTransactionParameters,

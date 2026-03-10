@@ -35,10 +35,9 @@ export type {
   SettlementReceipt,
 } from './types/settlement.js'
 export type {
-  SponsoredTransactionSignatureBundle,
+  TransactionSignatureBundle,
   TransactionSerializable,
   TransactionSerializableNative,
-  TransactionSerializableSponsored,
   TransactionSerialized,
   TransactionType,
 } from './types/transaction.js'
@@ -59,7 +58,6 @@ export type {
   RpcTransactionRequest,
   SendSystemActionParameters,
   SignTransactionParameters,
-  SubscriptionTransport,
   TransportConfig,
   WaitForTransactionReceiptParameters,
   WebSocketLike,
@@ -150,7 +148,4 @@ export {
   hashTransaction,
   type HashTransactionErrorType,
 } from './utils/transaction/hashTransaction.js'
-export {
-  serializeTransaction,
-  serializeTransactionSponsored,
-} from './utils/transaction/serializeTransaction.js'
+export { serializeTransaction } from './utils/transaction/serializeTransaction.js'

@@ -40,8 +40,8 @@ export function toAccount<accountSource extends AccountSource>(
   return {
     address: source.address,
     sign: source.sign,
+    signAuthorization: source.signAuthorization,
     signMessage: source.signMessage,
-    signSponsoredExecution: source.signSponsoredExecution,
     signTransaction: source.signTransaction,
     signTypedData: source.signTypedData,
     source: 'custom',

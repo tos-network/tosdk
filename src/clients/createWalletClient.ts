@@ -4,16 +4,16 @@ import type {
   SendPackageTransactionParameters,
   SendSystemActionParameters,
   SignTransactionParameters,
-  SponsoredTransactionParameters,
   WalletClient,
   WalletClientConfig,
 } from '../types/client.js'
 import type { Address } from '../types/address.js'
 import type { Hex, Signature } from '../types/misc.js'
+import type { TransactionSerializableNative } from '../types/transaction.js'
 import { toHex, type ToHexErrorType } from '../utils/encoding/toHex.js'
 import { encodePackageCallData } from '../utils/contract/encodePackageCallData.js'
 import { encodePackageDeployData } from '../utils/contract/encodePackageDeployData.js'
-import { serializeTransactionSponsored } from '../utils/transaction/serializeTransaction.js'
+import { serializeTransaction } from '../utils/transaction/serializeTransaction.js'
 import { createPublicClient, type CreatePublicClientErrorType } from './createPublicClient.js'
 import { getAddress, type GetAddressErrorType } from '../utils/address/getAddress.js'
 
@@ -32,47 +32,7 @@ export function createWalletClient(config: WalletClientConfig): WalletClient {
   const sendRawTransaction = ({ serializedTransaction }: { serializedTransaction: Hex }) =>
     publicClient.request<Hex>('tos_sendRawTransaction', [serializedTransaction])
 
-  const signTransaction = async ({
-    account = config.account,
-    chainId,
-    nonce,
-    gas = 21_000n,
-    to,
-    value = 0n,
-    data = '0x',
-    from,
-    signerType = 'secp256k1',
-  }: SignTransactionParameters): Promise<Hex> => {
-    const resolvedFrom = getAddress(from ?? account.address)
-    const [resolvedChainId, resolvedNonce] = await Promise.all([
-      typeof chainId === 'undefined' ? publicClient.getChainId() : BigInt(chainId),
-      typeof nonce === 'undefined'
-        ? publicClient.getTransactionCount({
-            address: resolvedFrom,
-            blockTag: 'pending',
-          })
-        : BigInt(nonce),
-    ])
-
-    return account.signTransaction({
-      chainId: resolvedChainId,
-      data,
-      from: resolvedFrom,
-      gas: BigInt(gas),
-      nonce: resolvedNonce,
-      signerType,
-      ...(typeof to !== 'undefined' && to !== null ? { to: getAddress(to) } : {}),
-      type: 'native',
-      value: BigInt(value),
-    })
-  }
-
-  const sendTransaction = async (parameters: SignTransactionParameters) => {
-    const serializedTransaction = await signTransaction(parameters)
-    return sendRawTransaction({ serializedTransaction })
-  }
-
-  const signSponsoredExecution = async ({
+  const buildTransaction = async ({
     account = config.account,
     chainId,
     nonce,
@@ -83,86 +43,93 @@ export function createWalletClient(config: WalletClientConfig): WalletClient {
     from,
     signerType = 'secp256k1',
     sponsor,
+    sponsorSignerType,
     sponsorNonce,
     sponsorExpiry,
     sponsorPolicyHash,
-  }: SponsoredTransactionParameters) => {
+  }: SignTransactionParameters): Promise<TransactionSerializableNative> => {
     const resolvedFrom = getAddress(from ?? account.address)
-    const resolvedChainId =
-      typeof chainId === 'undefined' ? await publicClient.getChainId() : BigInt(chainId)
-    const resolvedNonce =
+    const needsSponsorNonce = typeof sponsor !== 'undefined' && typeof sponsorNonce === 'undefined'
+    const [resolvedChainId, resolvedNonce, resolvedSponsorNonce] = await Promise.all([
+      typeof chainId === 'undefined' ? publicClient.getChainId() : BigInt(chainId),
       typeof nonce === 'undefined'
-        ? await publicClient.getTransactionCount({
+        ? publicClient.getTransactionCount({
             address: resolvedFrom,
             blockTag: 'pending',
           })
-        : BigInt(nonce)
+        : BigInt(nonce),
+      needsSponsorNonce
+        ? publicClient.getSponsorNonce({
+            address: getAddress(sponsor!),
+            blockTag: 'pending',
+          })
+        : typeof sponsorNonce === 'undefined'
+          ? Promise.resolve(undefined)
+          : Promise.resolve(BigInt(sponsorNonce)),
+    ])
 
-    return account.signSponsoredExecution({
+    return {
       chainId: resolvedChainId,
       data,
       from: resolvedFrom,
       gas: BigInt(gas),
       nonce: resolvedNonce,
       signerType,
-      sponsor: getAddress(sponsor),
-      sponsorExpiry: BigInt(sponsorExpiry),
-      sponsorNonce: BigInt(sponsorNonce),
-      sponsorPolicyHash,
+      ...(typeof sponsor !== 'undefined'
+        ? {
+            sponsor: getAddress(sponsor),
+            sponsorSignerType: sponsorSignerType ?? 'secp256k1',
+            sponsorNonce: resolvedSponsorNonce!,
+            sponsorExpiry: BigInt(sponsorExpiry!),
+            sponsorPolicyHash: sponsorPolicyHash!,
+          }
+        : {}),
       ...(typeof to !== 'undefined' && to !== null ? { to: getAddress(to) } : {}),
-      type: 'sponsored',
       value: BigInt(value),
+    }
+  }
+
+  const signAuthorization = async (
+    parameters: SignTransactionParameters,
+  ): Promise<Signature> => {
+    const account = parameters.account ?? config.account
+    return account.signAuthorization(await buildTransaction(parameters))
+  }
+
+  const assembleTransaction = async ({
+    executionSignature,
+    sponsorSignature,
+    ...parameters
+  }: SignTransactionParameters & {
+    executionSignature: Signature
+    sponsorSignature?: Signature | undefined
+  }): Promise<Hex> => {
+    const transaction = await buildTransaction(parameters)
+    return serializeTransaction(transaction, {
+      execution: executionSignature,
+      sponsor: sponsorSignature,
     })
   }
 
-  const signSponsoredTransaction = async ({
-    sponsorSignature,
-    ...parameters
-  }: SponsoredTransactionParameters & { sponsorSignature: Signature }) => {
-    const executionSignature = await signSponsoredExecution(parameters)
-    const account = parameters.account ?? config.account
-    const resolvedFrom = getAddress(parameters.from ?? account.address)
-    const resolvedChainId =
-      typeof parameters.chainId === 'undefined'
-        ? await publicClient.getChainId()
-        : BigInt(parameters.chainId)
-    const resolvedNonce =
-      typeof parameters.nonce === 'undefined'
-        ? await publicClient.getTransactionCount({
-            address: resolvedFrom,
-            blockTag: 'pending',
-          })
-        : BigInt(parameters.nonce)
-
-    return serializeTransactionSponsored(
-      {
-        chainId: resolvedChainId,
-        data: parameters.data ?? '0x',
-        from: resolvedFrom,
-        gas: BigInt(parameters.gas ?? 21_000n),
-        nonce: resolvedNonce,
-        signerType: parameters.signerType ?? 'secp256k1',
-        sponsor: getAddress(parameters.sponsor),
-        sponsorExpiry: BigInt(parameters.sponsorExpiry),
-        sponsorNonce: BigInt(parameters.sponsorNonce),
-        sponsorPolicyHash: parameters.sponsorPolicyHash,
-        ...(typeof parameters.to !== 'undefined' && parameters.to !== null
-          ? { to: getAddress(parameters.to) }
-          : {}),
-        type: 'sponsored',
-        value: BigInt(parameters.value ?? 0n),
-      },
-      {
-        execution: executionSignature,
-        sponsor: sponsorSignature,
-      },
-    )
+  const signTransaction = async (
+    parameters: SignTransactionParameters,
+  ): Promise<Hex> => {
+    const transaction = await buildTransaction(parameters)
+    const executionSignature = await (parameters.account ?? config.account)
+      .signAuthorization(transaction)
+    if (transaction.sponsor && !parameters.sponsorSignature) {
+      throw new Error(
+        'Sponsored native transactions require `sponsorSignature` to assemble the final envelope.',
+      )
+    }
+    return serializeTransaction(transaction, {
+      execution: executionSignature,
+      sponsor: parameters.sponsorSignature,
+    })
   }
 
-  const sendSponsoredTransaction = async (
-    parameters: SponsoredTransactionParameters & { sponsorSignature: Signature },
-  ) => {
-    const serializedTransaction = await signSponsoredTransaction(parameters)
+  const sendTransaction = async (parameters: SignTransactionParameters) => {
+    const serializedTransaction = await signTransaction(parameters)
     return sendRawTransaction({ serializedTransaction })
   }
 
@@ -213,12 +180,11 @@ export function createWalletClient(config: WalletClientConfig): WalletClient {
   return {
     ...publicClient,
     account: config.account,
+    assembleTransaction,
+    signAuthorization,
     signTransaction,
-    signSponsoredExecution,
-    signSponsoredTransaction,
     sendRawTransaction,
     sendTransaction,
-    sendSponsoredTransaction,
     sendPackageTransaction,
     deployPackage,
     sendSystemAction,

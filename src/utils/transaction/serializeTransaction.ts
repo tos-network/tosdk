@@ -4,10 +4,9 @@ import type {
   Signature,
 } from '../../types/misc.js'
 import type {
-  SponsoredTransactionSignatureBundle,
+  TransactionSignatureBundle,
   TransactionSerializable,
   TransactionSerializableNative,
-  TransactionSerializableSponsored,
   TransactionSerializableGeneric,
   TransactionSerialized,
   TransactionSerializedNative,
@@ -22,9 +21,7 @@ import {
 } from '../encoding/toHex.js'
 import { type ToRlpErrorType, toRlp } from '../encoding/toRlp.js'
 import {
-  type AssertTransactionSponsoredErrorType,
   type AssertTransactionNativeErrorType,
-  assertTransactionSponsored,
   assertTransactionNative,
 } from './assertTransaction.js'
 import {
@@ -48,40 +45,24 @@ export type SerializeTransactionFn<
 export type SerializeTransactionErrorType =
   | GetTransactionTypeErrorType
   | SerializeTransactionNativeErrorType
-  | SerializeTransactionSponsoredErrorType
   | ErrorType
 
 export function serializeTransaction(
   transaction: TransactionSerializable,
-  signature?: Signature | SponsoredTransactionSignatureBundle | undefined,
+  signature?: Signature | TransactionSignatureBundle | undefined,
 ): TransactionSerialized {
   const type = getTransactionType(transaction as any) as GetTransactionType
   if (type === 'native') {
-    if (isSponsoredSignatureBundle(signature))
-      throw new Error('Native transactions do not accept sponsor signatures.')
     return serializeTransactionNative(
       transaction as TransactionSerializableNative,
       signature,
     ) as TransactionSerialized
   }
-  if (type === 'sponsored') {
-    return serializeTransactionSponsored(
-      transaction as TransactionSerializableSponsored,
-      isSponsoredSignatureBundle(signature) ? signature : undefined,
-    ) as TransactionSerialized
-  }
   throw new Error(`Unsupported transaction type: ${type}`)
 }
 
-type SerializeTransactionNativeErrorType =
+export type SerializeTransactionNativeErrorType =
   | AssertTransactionNativeErrorType
-  | ConcatHexErrorType
-  | NumberToHexErrorType
-  | ToRlpErrorType
-  | ErrorType
-
-export type SerializeTransactionSponsoredErrorType =
-  | AssertTransactionSponsoredErrorType
   | ConcatHexErrorType
   | NumberToHexErrorType
   | ToRlpErrorType
@@ -89,32 +70,8 @@ export type SerializeTransactionSponsoredErrorType =
 
 function serializeTransactionNative(
   transaction: TransactionSerializableNative,
-  signature?: Signature | undefined,
+  signature?: Signature | TransactionSignatureBundle | undefined,
 ): TransactionSerializedNative {
-  const { chainId, data, from, gas, nonce, signerType, to, value } = transaction
-
-  assertTransactionNative(transaction)
-
-  const serializedTransaction = [
-    toMinimalQuantityHex(chainId),
-    toMinimalQuantityHex(nonce),
-    toMinimalQuantityHex(gas),
-    to ?? '0x',
-    toMinimalQuantityHex(value),
-    data ?? '0x',
-    [],
-    from,
-    bytesToHex(new TextEncoder().encode(signerType)),
-    ...toNativeSignatureArray(signature),
-  ]
-
-  return concatHex(['0x00', toRlp(serializedTransaction)]) as TransactionSerializedNative
-}
-
-export function serializeTransactionSponsored(
-  transaction: TransactionSerializableSponsored,
-  signatures?: SponsoredTransactionSignatureBundle | undefined,
-): TransactionSerialized {
   const {
     chainId,
     data,
@@ -126,11 +83,12 @@ export function serializeTransactionSponsored(
     sponsorExpiry,
     sponsorNonce,
     sponsorPolicyHash,
+    sponsorSignerType,
     to,
     value,
   } = transaction
 
-  assertTransactionSponsored(transaction)
+  assertTransactionNative(transaction)
 
   const serializedTransaction = [
     toMinimalQuantityHex(chainId),
@@ -139,22 +97,32 @@ export function serializeTransactionSponsored(
     to ?? '0x',
     toMinimalQuantityHex(value),
     data ?? '0x',
-    [],
+    emptyAccessList,
     from,
     bytesToHex(new TextEncoder().encode(signerType)),
-    sponsor,
+    sponsor ?? zeroAddress,
+    bytesToHex(new TextEncoder().encode(sponsorSignerType ?? '')),
     toMinimalQuantityHex(sponsorNonce),
     toMinimalQuantityHex(sponsorExpiry),
-    sponsorPolicyHash,
-    ...toNativeSignatureArray(signatures?.execution),
-    ...toNativeSignatureArray(signatures?.sponsor),
+    sponsorPolicyHash ?? zeroHash,
+    ...toNativeSignatureArray(executionSignature(signature)),
+    ...toNativeSignatureArray(sponsorSignature(signature), true),
   ]
 
-  return concatHex(['0x01', toRlp(serializedTransaction)]) as TransactionSerialized
+  return concatHex(['0x00', toRlp(serializedTransaction)]) as TransactionSerializedNative
 }
 
-function toNativeSignatureArray(signature?: Signature | undefined) {
-  if (!signature) return []
+const zeroAddress =
+  '0x0000000000000000000000000000000000000000000000000000000000000000' as Hex
+const zeroHash =
+  '0x0000000000000000000000000000000000000000000000000000000000000000' as Hex
+const emptyAccessList: readonly Hex[] = []
+
+function toNativeSignatureArray(
+  signature?: Signature | undefined,
+  padAbsent = false,
+): Hex[] {
+  if (!signature) return padAbsent ? ['0x', '0x', '0x'] : []
   return [
     toMinimalQuantityHex(signature.v ?? BigInt(signature.yParity ?? 0)),
     rlpHex(signature.r),
@@ -172,13 +140,26 @@ function rlpHex(hex: Hex): Hex {
   return hex.replace(/^0x0+/, '0x').replace(/^0x$/, '0x0') as Hex
 }
 
-function isSponsoredSignatureBundle(
-  signature: Signature | SponsoredTransactionSignatureBundle | undefined,
-): signature is SponsoredTransactionSignatureBundle {
+function isTransactionSignatureBundle(
+  signature: Signature | TransactionSignatureBundle | undefined,
+): signature is TransactionSignatureBundle {
   return (
     typeof signature === 'object' &&
     signature !== null &&
-    'execution' in signature &&
-    'sponsor' in signature
+    'execution' in signature
   )
+}
+
+function executionSignature(
+  signature: Signature | TransactionSignatureBundle | undefined,
+) {
+  if (isTransactionSignatureBundle(signature)) return signature.execution
+  return signature
+}
+
+function sponsorSignature(
+  signature: Signature | TransactionSignatureBundle | undefined,
+) {
+  if (isTransactionSignatureBundle(signature)) return signature.sponsor
+  return undefined
 }

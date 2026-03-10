@@ -3,7 +3,6 @@ import { describe, expect, test } from 'vitest'
 
 import {
   serializeTransaction,
-  serializeTransactionSponsored,
   toBytes,
   verifyMessage,
 } from 'tosdk'
@@ -110,7 +109,7 @@ describe('native signing', () => {
         },
       }),
     ).resolves.toBe(
-      '0x00f8a182068280825208a0482845ef5f7df661eb71148970997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0a0c1ffd3cfee2d9e5cd67643f8f39fd6e51aad88f6f4ce6ab8827279cfffb9226689736563703235366b311ca00f7d56c78d0f419f2c4bc48efb2897006f6be93dba62bebb0fb21e05f329eaf7a07c4b6c17f310eedaac9bd75169f33f9421653c64b1396dbaf69c25db528c72ff',
+      '0x00f8e982068280825208a0482845ef5f7df661eb71148970997970c51812dc3a010c7d01b50e0d17dc79c8880de0b6b3a764000080c0a0c1ffd3cfee2d9e5cd67643f8f39fd6e51aad88f6f4ce6ab8827279cfffb9226689736563703235366b31a00000000000000000000000000000000000000000000000000000000000000000808080a000000000000000000000000000000000000000000000000000000000000000001ca0c67ea69ee65e3a4de2e7f92ffd604f1ce72d96f910717498f6bd14b62305501aa0741a202b6ce4fa608de4c3d74f0d4c8be8c0ba928db6d0d3c6548f2536daa7ab808080',
     )
   })
 
@@ -123,12 +122,12 @@ describe('native signing', () => {
         nonce: 0n,
         signerType: 'secp256k1',
         sponsor: nativeAccounts[2]!.address,
+        sponsorSignerType: 'secp256k1',
         sponsorExpiry: 1_800_000_000n,
         sponsorNonce: 7n,
         sponsorPolicyHash:
           '0x1111111111111111111111111111111111111111111111111111111111111111',
         to: nativeAccounts[1]!.address,
-        type: 'sponsored',
         value: 123n,
       },
       {
@@ -145,15 +144,15 @@ describe('native signing', () => {
       },
     )
 
-    expect(serialized.startsWith('0x01')).toBe(true)
+    expect(serialized.startsWith('0x00')).toBe(true)
     expect(serialized).toContain(
       nativeAccounts[2]!.address.toLowerCase().slice(2),
     )
   })
 
-  test('serializeTransactionSponsored builds a deterministic sponsored envelope', () => {
+  test('serializeTransaction builds a deterministic sponsored envelope', () => {
     expect(
-      serializeTransactionSponsored(
+      serializeTransaction(
         {
           chainId: 1666,
           from: nativeAccounts[0]!.address,
@@ -161,12 +160,12 @@ describe('native signing', () => {
           nonce: 0n,
           signerType: 'secp256k1',
           sponsor: nativeAccounts[2]!.address,
+          sponsorSignerType: 'secp256k1',
           sponsorExpiry: 1_800_000_000n,
           sponsorNonce: 7n,
           sponsorPolicyHash:
             '0x1111111111111111111111111111111111111111111111111111111111111111',
           to: nativeAccounts[1]!.address,
-          type: 'sponsored',
           value: 123n,
         },
         {
@@ -183,7 +182,7 @@ describe('native signing', () => {
         },
       ),
     ).toBe(
-      '0x01f8a482068200825208a0482845ef5f7df661eb71148970997970c51812dc3a010c7d01b50e0d17dc79c87b80c0a0c1ffd3cfee2d9e5cd67643f8f39fd6e51aad88f6f4ce6ab8827279cfffb9226689736563703235366b31a0f5a7a1de5c98f3df76fc2e153c44cdddb6a900fa2b585dd299e03d12fa4293bc07846b49d200a01111111111111111111111111111111111111111111111111111111111111111010102000304',
+      '0x00f8ae82068200825208a0482845ef5f7df661eb71148970997970c51812dc3a010c7d01b50e0d17dc79c87b80c0a0c1ffd3cfee2d9e5cd67643f8f39fd6e51aad88f6f4ce6ab8827279cfffb9226689736563703235366b31a0f5a7a1de5c98f3df76fc2e153c44cdddb6a900fa2b585dd299e03d12fa4293bc89736563703235366b3107846b49d200a01111111111111111111111111111111111111111111111111111111111111111010102000304',
     )
   })
 

@@ -4,7 +4,7 @@ import type { Hex, Signature } from './misc.js'
 export type TransactionType = 'native' | (string & {})
 
 export type TransactionSerializableNative = {
-  type: 'native'
+  type?: 'native' | undefined
   chainId: number | bigint
   nonce: number | bigint
   gas: number | bigint
@@ -13,27 +13,14 @@ export type TransactionSerializableNative = {
   data?: Hex | undefined
   from: Address
   signerType: string
+  sponsor?: Address | undefined
+  sponsorSignerType?: string | undefined
+  sponsorNonce?: number | bigint | undefined
+  sponsorExpiry?: number | bigint | undefined
+  sponsorPolicyHash?: Hex | undefined
 }
 
-export type TransactionSerializableSponsored = {
-  type: 'sponsored'
-  chainId: number | bigint
-  nonce: number | bigint
-  gas: number | bigint
-  to?: Address | null | undefined
-  value: number | bigint
-  data?: Hex | undefined
-  from: Address
-  signerType: string
-  sponsor: Address
-  sponsorNonce: number | bigint
-  sponsorExpiry: number | bigint
-  sponsorPolicyHash: Hex
-}
-
-export type TransactionSerializable =
-  | TransactionSerializableNative
-  | TransactionSerializableSponsored
+export type TransactionSerializable = TransactionSerializableNative
 export type TransactionSerializableGeneric = TransactionSerializable
 
 export type TransactionSerializedNative = Hex
@@ -86,7 +73,7 @@ export type TransactionReceipt<
 
 export type SignatureValues = Signature<0 | 1, bigint>
 
-export type SponsoredTransactionSignatureBundle = {
+export type TransactionSignatureBundle = {
   execution: Signature
-  sponsor: Signature
+  sponsor?: Signature | undefined
 }
