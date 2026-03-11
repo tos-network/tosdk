@@ -64,7 +64,9 @@
     "build": "pnpm clean && pnpm build:cjs && pnpm build:esm && pnpm build:types",
     "prepare": "pnpm build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest -c ./test/vitest.config.ts run"
+    "test:unit": "vitest -c ./test/vitest.config.ts run",
+    "test:examples": "tsc -p ./examples/tsconfig.json --noEmit",
+    "test": "pnpm test:unit && pnpm test:examples"
   },
   "dependencies": {
     "@noble/curves": "^1.9.7",

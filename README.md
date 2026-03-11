@@ -76,7 +76,16 @@ Repository examples are available under `examples/`:
 
 - `examples/network-wallet.ts`
 - `examples/provider-clients.ts`
+- `examples/delegated-execution.ts`
 - `examples/storage-and-artifacts.ts`
+- `examples/marketplace-and-settlement.ts`
+- `examples/provider-service-shapes.ts`
+
+Validate the example pack with:
+
+```bash
+pnpm test:examples
+```
 
 ## License
 
