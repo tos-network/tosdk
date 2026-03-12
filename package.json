@@ -38,6 +38,16 @@
       "import": "./dist/esm/transports/index.js",
       "default": "./dist/cjs/transports/index.js"
     },
+    "./surfaces": {
+      "types": "./dist/types/surfaces/index.d.ts",
+      "import": "./dist/esm/surfaces/index.js",
+      "default": "./dist/cjs/surfaces/index.js"
+    },
+    "./schema": {
+      "types": "./dist/types/schema/index.d.ts",
+      "import": "./dist/esm/schema/index.js",
+      "default": "./dist/cjs/schema/index.js"
+    },
     "./package.json": "./package.json"
   },
   "typesVersions": {
@@ -53,6 +63,12 @@
       ],
       "transports": [
         "./dist/types/transports/index.d.ts"
+      ],
+      "surfaces": [
+        "./dist/types/surfaces/index.d.ts"
+      ],
+      "schema": [
+        "./dist/types/schema/index.d.ts"
       ]
     }
   },

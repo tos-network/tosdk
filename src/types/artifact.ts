@@ -3,9 +3,13 @@ import type { Hex } from './misc.js'
 
 export type ArtifactBundleKind =
   | 'public_news.capture'
+  | 'zktls.bundle'
   | 'oracle.evidence'
   | 'oracle.aggregate'
   | 'committee.vote'
+  | 'committee.aggregate'
+  | 'proof.verifier_receipt'
+  | 'proof.material'
 
 export type ArtifactVerificationStatus = 'verified' | 'failed'
 

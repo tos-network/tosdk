@@ -12,7 +12,9 @@
       "tosdk/accounts": ["src/accounts/index.ts"],
       "tosdk/chains": ["src/chains/index.ts"],
       "tosdk/clients": ["src/clients/index.ts"],
-      "tosdk/transports": ["src/transports/index.ts"]
+      "tosdk/transports": ["src/transports/index.ts"],
+      "tosdk/surfaces": ["src/surfaces/index.ts"],
+      "tosdk/schema": ["src/schema/index.ts"]
     },
     "noEmit": true
   }

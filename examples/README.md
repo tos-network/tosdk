@@ -11,6 +11,7 @@ Included examples:
 - `delegated-execution.ts`
 - `marketplace-and-settlement.ts`
 - `provider-service-shapes.ts`
+- `proof-market-pack.ts`
 
 Example groups:
 
@@ -28,6 +29,10 @@ Example groups:
   - market binding and settlement receipts, canonicalization, and hashes
 - `provider-service-shapes.ts`
   - typed request/response payload shapes for third-party provider implementations
+- `proof-market-pack.ts`
+  - public proof bundle classes
+  - proof-oriented search filters
+  - verification receipt and anchor helpers
 
 All examples are intentionally small and use placeholder URLs, addresses, and
 ids. Replace them before connecting to a real node or provider.

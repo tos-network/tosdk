@@ -196,3 +196,94 @@ export {
   type HashTransactionErrorType,
 } from './utils/transaction/hashTransaction.js'
 export { serializeTransaction } from './utils/transaction/serializeTransaction.js'
+
+// -- Reusable SDK Surfaces --
+export {
+  buildRequesterEnvelope,
+  toDelegatedResult,
+  toSponsoredResult,
+  isSignerQuoteValid,
+  isPaymasterQuoteValid,
+  validateDelegatedRequest,
+  type DelegatedExecutionRequest,
+  type DelegatedExecutionResult,
+  type SponsoredExecutionResult,
+} from './surfaces/delegatedExecution.js'
+
+export {
+  buildEvidenceCaptureRequest,
+  verifyEvidenceReceipt,
+  verifyEvidenceAnchor,
+  isOracleEvidenceKind,
+  validateEvidenceParams,
+  type EvidenceCaptureParams,
+  type EvidenceVerificationResult,
+  type EvidenceAnchorResult,
+} from './surfaces/evidence.js'
+
+export {
+  registerProvider,
+  aggregateFleetStatus,
+  checkProviderHealth,
+  filterByRole,
+  validateRegistration,
+  type ProviderRole,
+  type ProviderRegistration,
+  type ProviderHealthStatus,
+  type FleetStatus,
+} from './surfaces/operatorControl.js'
+
+export {
+  buildProofArtifactSearchParams,
+  isCryptographicProofArtifactKind,
+  isPublicProofArtifactKind,
+  verifyProofArtifactAnchor,
+  verifyProofArtifactReceipt,
+  type ProofAnchorResult,
+  type ProofArtifactSearchParams,
+  type ProofVerificationResult,
+  type PublicProofArtifactKind,
+} from './surfaces/proofMarket.js'
+
+// -- Versioned Schema / Reference Exports --
+export {
+  SCHEMA_VERSION,
+  createSchemaReference,
+  type SchemaVersion,
+  type SchemaReference,
+} from './schema/version.js'
+
+export {
+  SignerQuoteRequestSchema,
+  SignerQuoteResponseSchema,
+  SignerSubmitRequestSchema,
+  SignerExecutionResponseSchema,
+  PaymasterQuoteRequestSchema,
+  PaymasterQuoteResponseSchema,
+  PaymasterAuthorizeRequestSchema,
+  PaymasterAuthorizationResponseSchema,
+  StorageQuoteRequestSchema,
+  StorageQuoteResponseSchema,
+  StoragePutRequestSchema,
+  StorageLeaseResponseSchema,
+  ALL_PROVIDER_SCHEMAS,
+} from './schema/providerSchemas.js'
+
+export {
+  StorageReceiptSchema,
+  StorageAnchorSummarySchema,
+  ArtifactVerificationReceiptSchema,
+  ArtifactAnchorSummarySchema,
+  MarketBindingReceiptSchema,
+  SettlementReceiptSchema,
+  ALL_OPERATOR_SCHEMAS,
+} from './schema/operatorSchemas.js'
+
+export {
+  validateAgainstSchema,
+  detectDrift,
+  validateBatch,
+  detectBatchDrift,
+  type ValidationResult,
+  type DriftReport,
+} from './schema/validate.js'
