@@ -4,12 +4,29 @@ import {
   type TransactionReceiptTimeoutErrorType,
 } from '../errors/client.js'
 import type {
+  AgentCardResponse,
+  AgentDirectorySearchParams,
+  AgentDiscoveryInfo,
+  AgentSearchParams,
+  AgentSearchResult,
+} from '../types/agent.js'
+import type {
+  AccessListResult,
+  AccountProof,
+  AccountState,
   BlockTag,
   CallPackageParameters,
+  ChainProfile,
   FeeHistory,
+  FilterId,
+  FinalizedBlock,
   LogFilter,
+  MaliciousVoteEvidenceRecord,
+  NewFilterParams,
+  PruneWatermark,
   PublicClient,
   PublicClientConfig,
+  RetentionPolicy,
   RpcBlock,
   RpcTransactionRequest,
   RpcLog,
@@ -18,8 +35,24 @@ import type {
   RpcTransaction,
   RpcTransactionReceipt,
   SubscriptionTransport,
+  SyncingStatus,
   WaitForTransactionReceiptParameters,
 } from '../types/client.js'
+import type {
+  TxPoolContent,
+  TxPoolContentFrom,
+  TxPoolInspect,
+  TxPoolStatus,
+} from '../types/txpool.js'
+import type {
+  EpochInfo,
+  GetEpochInfoParams,
+  GetSnapshotParams,
+  GetValidatorParams,
+  GetValidatorsParams,
+  Snapshot,
+  ValidatorInfo,
+} from '../types/dpos.js'
 import type {
   BuiltTransactionResult,
   GetLeaseParameters,
@@ -28,6 +61,7 @@ import type {
   LeaseRecord,
   LeaseRenewParameters,
 } from '../types/lease.js'
+import type { Address } from '../types/address.js'
 import type { Hex } from '../types/misc.js'
 import type {
   GetPrivBalanceParameters,
@@ -255,10 +289,11 @@ export function createPublicClient(
         ]),
       )
     },
-    async estimateGas({ request: estimateRequest }) {
+    async estimateGas({ request: estimateRequest, blockTag = 'latest' }) {
       return parseRpcQuantity(
         await request<Hex>('tos_estimateGas', [
           serializeRpcTransactionRequest(estimateRequest),
+          normalizeBlockTag(blockTag),
         ]),
       )
     },
@@ -312,6 +347,207 @@ export function createPublicClient(
         await delay(pollIntervalMs)
       }
       throw new TransactionReceiptTimeoutError({ hash, timeoutMs })
+    },
+    async gasPrice() {
+      return parseRpcQuantity(await request<Hex>('tos_gasPrice'))
+    },
+    async syncing() {
+      const result = await request<false | SyncingStatus>('tos_syncing')
+      if (result === false) return false
+      return result
+    },
+    async getBlockTransactionCountByNumber({ blockNumber }) {
+      return parseRpcQuantity(
+        await request<Hex>('tos_getBlockTransactionCountByNumber', [
+          normalizeBlockTag(blockNumber),
+        ]),
+      )
+    },
+    async getBlockTransactionCountByHash({ hash }) {
+      return parseRpcQuantity(
+        await request<Hex>('tos_getBlockTransactionCountByHash', [hash]),
+      )
+    },
+    async getTransactionByBlockNumberAndIndex({ blockNumber, index }) {
+      return request<RpcTransaction | null>(
+        'tos_getTransactionByBlockNumberAndIndex',
+        [normalizeBlockTag(blockNumber), numberToHex(index)],
+      )
+    },
+    async getTransactionByBlockHashAndIndex({ hash, index }) {
+      return request<RpcTransaction | null>(
+        'tos_getTransactionByBlockHashAndIndex',
+        [hash, numberToHex(index)],
+      )
+    },
+    async pendingTransactions() {
+      return request<readonly RpcTransaction[]>('tos_pendingTransactions')
+    },
+    async getProof({ address, storageKeys, blockTag = 'latest' }) {
+      return request<AccountProof>('tos_getProof', [
+        getAddress(address),
+        storageKeys,
+        normalizeBlockTag(blockTag),
+      ])
+    },
+    async createAccessList({ request: accessListRequest, blockTag = 'latest' }) {
+      return request<AccessListResult>('tos_createAccessList', [
+        serializeRpcTransactionRequest(accessListRequest),
+        normalizeBlockTag(blockTag),
+      ])
+    },
+    async netVersion() {
+      return request<string>('net_version')
+    },
+    async netPeerCount() {
+      return parseRpcQuantity(await request<Hex>('net_peerCount'))
+    },
+    async netListening() {
+      return request<boolean>('net_listening')
+    },
+    async clientVersion() {
+      return request<string>('web3_clientVersion')
+    },
+    // -- DPoS / Validator queries --
+    async getSnapshot({ blockTag = 'latest' }: GetSnapshotParams = {}) {
+      return request<Snapshot>('dpos_getSnapshot', [
+        normalizeBlockTag(blockTag),
+      ])
+    },
+    async getValidators({ blockTag = 'latest' }: GetValidatorsParams = {}) {
+      return request<readonly Address[]>('dpos_getValidators', [
+        normalizeBlockTag(blockTag),
+      ])
+    },
+    async getValidator({ address, blockTag = 'latest' }: GetValidatorParams) {
+      return request<ValidatorInfo>('dpos_getValidator', [
+        getAddress(address),
+        normalizeBlockTag(blockTag),
+      ])
+    },
+    async getEpochInfo({ blockTag = 'latest' }: GetEpochInfoParams = {}) {
+      return request<EpochInfo>('dpos_getEpochInfo', [
+        normalizeBlockTag(blockTag),
+      ])
+    },
+    // -- Agent Discovery (read-only) --
+    async agentDiscoveryInfo() {
+      return request<AgentDiscoveryInfo>('tos_agentDiscoveryInfo')
+    },
+    async agentDiscoverySearch({ capability, limit }: AgentSearchParams) {
+      const params: unknown[] = [capability]
+      if (typeof limit !== 'undefined') {
+        params.push(limit)
+      }
+      return request<readonly AgentSearchResult[]>(
+        'tos_agentDiscoverySearch',
+        params,
+      )
+    },
+    async agentDiscoveryGetCard({ nodeRecord }: { nodeRecord: string }) {
+      return request<AgentCardResponse>('tos_agentDiscoveryGetCard', [
+        nodeRecord,
+      ])
+    },
+    async agentDiscoveryDirectorySearch({
+      nodeRecord,
+      capability,
+      limit,
+    }: AgentDirectorySearchParams) {
+      const params: unknown[] = [nodeRecord, capability]
+      if (typeof limit !== 'undefined') {
+        params.push(limit)
+      }
+      return request<readonly AgentSearchResult[]>(
+        'tos_agentDiscoveryDirectorySearch',
+        params,
+      )
+    },
+    // -- Filter system --
+    async newBlockFilter() {
+      return request<FilterId>('tos_newBlockFilter')
+    },
+    async newPendingTransactionFilter() {
+      return request<FilterId>('tos_newPendingTransactionFilter')
+    },
+    async newFilter(params: NewFilterParams) {
+      return request<FilterId>('tos_newFilter', [
+        serializeNewFilterParams(params),
+      ])
+    },
+    async getFilterChanges({ filterId }) {
+      return request<readonly RpcLog[] | readonly Hex[]>(
+        'tos_getFilterChanges',
+        [filterId],
+      )
+    },
+    async getFilterLogs({ filterId }) {
+      return request<readonly RpcLog[]>('tos_getFilterLogs', [filterId])
+    },
+    async uninstallFilter({ filterId }) {
+      return request<boolean>('tos_uninstallFilter', [filterId])
+    },
+    // -- Chain state queries --
+    async getChainProfile() {
+      return request<ChainProfile>('tos_getChainProfile')
+    },
+    async getFinalizedBlock() {
+      return request<FinalizedBlock | null>('tos_getFinalizedBlock')
+    },
+    async getRetentionPolicy() {
+      return request<RetentionPolicy>('tos_getRetentionPolicy')
+    },
+    async getPruneWatermark() {
+      return request<PruneWatermark>('tos_getPruneWatermark')
+    },
+    async getAccount({ address, blockTag = 'latest' }) {
+      return request<AccountState>('tos_getAccount', [
+        getAddress(address),
+        normalizeBlockTag(blockTag),
+      ])
+    },
+    // -- WebSocket subscriptions --
+    async watchPendingTransactions({ onTransaction, onError }) {
+      return subscribe<Hex>({
+        event: 'newPendingTransactions',
+        onData: onTransaction,
+        ...(onError ? { onError } : {}),
+      })
+    },
+    async watchSyncing({ onStatus, onError }) {
+      return subscribe<SyncingStatus | false>({
+        event: 'syncing',
+        onData: onStatus,
+        ...(onError ? { onError } : {}),
+      })
+    },
+    // -- Malicious vote evidence (read-only) --
+    async getMaliciousVoteEvidence({ hash, blockTag = 'latest' }) {
+      return request<MaliciousVoteEvidenceRecord | null>(
+        'tos_getMaliciousVoteEvidence',
+        [hash, normalizeBlockTag(blockTag)],
+      )
+    },
+    async listMaliciousVoteEvidence({ count = 100, blockTag = 'latest' } = {}) {
+      return request<readonly MaliciousVoteEvidenceRecord[]>(
+        'tos_listMaliciousVoteEvidence',
+        [numberToHex(count), normalizeBlockTag(blockTag)],
+      )
+    },
+    // -- TxPool --
+    async txpoolContent() {
+      return request<TxPoolContent>('txpool_content')
+    },
+    async txpoolContentFrom({ address }) {
+      return request<TxPoolContentFrom>('txpool_contentFrom', [
+        getAddress(address),
+      ])
+    },
+    async txpoolStatus() {
+      return request<TxPoolStatus>('txpool_status')
+    },
+    async txpoolInspect() {
+      return request<TxPoolInspect>('txpool_inspect')
     },
   }
 }
@@ -484,6 +720,23 @@ function serializeLeaseCloseParameters(parameters: LeaseCloseParameters) {
       ? { gas: numberToHex(parameters.gas) }
       : {}),
     contractAddr: getAddress(parameters.contractAddress),
+  }
+}
+
+function serializeNewFilterParams(params: NewFilterParams) {
+  const address = params.address
+
+  return {
+    ...(address
+      ? {
+          address: Array.isArray(address)
+            ? address.map((item) => getAddress(item))
+            : getAddress(address as Hex),
+        }
+      : {}),
+    ...(params.topics ? { topics: params.topics } : {}),
+    fromBlock: normalizeBlockTag(params.fromBlock ?? 'latest'),
+    toBlock: normalizeBlockTag(params.toBlock ?? 'latest'),
   }
 }
 

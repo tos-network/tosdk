@@ -343,6 +343,7 @@ test('public client uses the chain default RPC URL and returns native quantities
         from: nativeAccounts[0]!.address,
         to: nativeAccounts[1]!.address,
       },
+      'latest',
     ],
   })
   expect(calls[14]!.request).toMatchObject({
@@ -1256,4 +1257,1636 @@ test('webSocket transport supports RPC requests and subscriptions', async () => 
   })
   socket.emitResult(socket.sent[4]!.id, true)
   await unsubscribeLogPromise
+})
+
+test('gasPrice returns the current gas price as bigint', async () => {
+  const { calls, fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'tos_gasPrice':
+        return toHex(20_000_000_000n)
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createPublicClient({
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  await expect(client.gasPrice()).resolves.toBe(20_000_000_000n)
+
+  expect(calls[0]!.request).toMatchObject({
+    method: 'tos_gasPrice',
+    params: [],
+  })
+})
+
+test('syncing returns false when not syncing', async () => {
+  const { calls, fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'tos_syncing':
+        return false
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createPublicClient({
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  await expect(client.syncing()).resolves.toBe(false)
+
+  expect(calls[0]!.request).toMatchObject({
+    method: 'tos_syncing',
+    params: [],
+  })
+})
+
+test('syncing returns SyncingStatus when node is syncing', async () => {
+  const syncingStatus = {
+    startingBlock: '0x0',
+    currentBlock: '0x100',
+    highestBlock: '0x200',
+  }
+
+  const { calls, fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'tos_syncing':
+        return syncingStatus
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createPublicClient({
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  await expect(client.syncing()).resolves.toEqual(syncingStatus)
+
+  expect(calls[0]!.request).toMatchObject({
+    method: 'tos_syncing',
+    params: [],
+  })
+})
+
+test('estimateGas accepts a blockTag parameter and sends it in RPC params', async () => {
+  const { calls, fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'tos_estimateGas':
+        return toHex(42_000n)
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createPublicClient({
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  await expect(
+    client.estimateGas({
+      request: {
+        from: nativeAccounts[0]!.address,
+        to: nativeAccounts[1]!.address,
+      },
+      blockTag: 'pending',
+    }),
+  ).resolves.toBe(42_000n)
+
+  expect(calls[0]!.request).toMatchObject({
+    method: 'tos_estimateGas',
+    params: [
+      {
+        from: nativeAccounts[0]!.address,
+        to: nativeAccounts[1]!.address,
+      },
+      'pending',
+    ],
+  })
+})
+
+test('getBlockTransactionCountByNumber returns tx count for a block number', async () => {
+  const { calls, fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'tos_getBlockTransactionCountByNumber':
+        return toHex(5n)
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createPublicClient({
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  await expect(
+    client.getBlockTransactionCountByNumber({ blockNumber: 100n }),
+  ).resolves.toBe(5n)
+
+  expect(calls[0]!.request).toMatchObject({
+    method: 'tos_getBlockTransactionCountByNumber',
+    params: [toHex(100n)],
+  })
+})
+
+test('getBlockTransactionCountByHash returns tx count for a block hash', async () => {
+  const { calls, fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'tos_getBlockTransactionCountByHash':
+        return toHex(3n)
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createPublicClient({
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  await expect(
+    client.getBlockTransactionCountByHash({ hash: '0xabcd' }),
+  ).resolves.toBe(3n)
+
+  expect(calls[0]!.request).toMatchObject({
+    method: 'tos_getBlockTransactionCountByHash',
+    params: ['0xabcd'],
+  })
+})
+
+test('getTransactionByBlockNumberAndIndex returns a transaction', async () => {
+  const mockTx = {
+    hash: '0xdddd',
+    from: nativeAccounts[0]!.address,
+    to: nativeAccounts[1]!.address,
+    value: toHex(100n),
+  }
+
+  const { calls, fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'tos_getTransactionByBlockNumberAndIndex':
+        return mockTx
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createPublicClient({
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  await expect(
+    client.getTransactionByBlockNumberAndIndex({ blockNumber: 50n, index: 2 }),
+  ).resolves.toEqual(mockTx)
+
+  expect(calls[0]!.request).toMatchObject({
+    method: 'tos_getTransactionByBlockNumberAndIndex',
+    params: [toHex(50n), toHex(2)],
+  })
+})
+
+test('getTransactionByBlockHashAndIndex returns a transaction', async () => {
+  const mockTx = {
+    hash: '0xeeee',
+    from: nativeAccounts[0]!.address,
+    to: nativeAccounts[1]!.address,
+    value: toHex(200n),
+  }
+
+  const { calls, fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'tos_getTransactionByBlockHashAndIndex':
+        return mockTx
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createPublicClient({
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  await expect(
+    client.getTransactionByBlockHashAndIndex({ hash: '0xbeef', index: 0 }),
+  ).resolves.toEqual(mockTx)
+
+  expect(calls[0]!.request).toMatchObject({
+    method: 'tos_getTransactionByBlockHashAndIndex',
+    params: ['0xbeef', toHex(0)],
+  })
+})
+
+test('pendingTransactions returns a list of pending transactions', async () => {
+  const mockPending = [
+    {
+      hash: '0xaaaa',
+      from: nativeAccounts[0]!.address,
+      to: nativeAccounts[1]!.address,
+      value: toHex(10n),
+    },
+    {
+      hash: '0xbbbb',
+      from: nativeAccounts[1]!.address,
+      to: nativeAccounts[0]!.address,
+      value: toHex(20n),
+    },
+  ]
+
+  const { calls, fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'tos_pendingTransactions':
+        return mockPending
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createPublicClient({
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  await expect(client.pendingTransactions()).resolves.toEqual(mockPending)
+
+  expect(calls[0]!.request).toMatchObject({
+    method: 'tos_pendingTransactions',
+    params: [],
+  })
+})
+
+test('getProof returns account proof with storage proofs', async () => {
+  const mockProof = {
+    address: nativeAccounts[0]!.address,
+    accountProof: ['0x1111', '0x2222'],
+    balance: toHex(1000n),
+    codeHash: '0x3333333333333333333333333333333333333333333333333333333333333333',
+    nonce: toHex(5n),
+    storageHash: '0x4444444444444444444444444444444444444444444444444444444444444444',
+    storageProof: [
+      {
+        key: '0x01',
+        value: toHex(99n),
+        proof: ['0x5555', '0x6666'],
+      },
+    ],
+  }
+
+  const { calls, fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'tos_getProof':
+        return mockProof
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createPublicClient({
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  await expect(
+    client.getProof({
+      address: nativeAccounts[0]!.address,
+      storageKeys: ['0x01'],
+      blockTag: '0x32',
+    }),
+  ).resolves.toEqual(mockProof)
+
+  expect(calls[0]!.request).toMatchObject({
+    method: 'tos_getProof',
+    params: [nativeAccounts[0]!.address, ['0x01'], '0x32'],
+  })
+})
+
+test('getProof uses latest as default blockTag', async () => {
+  const mockProof = {
+    address: nativeAccounts[0]!.address,
+    accountProof: [],
+    balance: toHex(0n),
+    codeHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
+    nonce: toHex(0n),
+    storageHash: '0x0000000000000000000000000000000000000000000000000000000000000000',
+    storageProof: [],
+  }
+
+  const { calls, fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'tos_getProof':
+        return mockProof
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createPublicClient({
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  await expect(
+    client.getProof({
+      address: nativeAccounts[0]!.address,
+      storageKeys: [],
+    }),
+  ).resolves.toEqual(mockProof)
+
+  expect(calls[0]!.request).toMatchObject({
+    method: 'tos_getProof',
+    params: [nativeAccounts[0]!.address, [], 'latest'],
+  })
+})
+
+test('createAccessList returns access list and gas used', async () => {
+  const mockResult = {
+    accessList: [
+      {
+        address: nativeAccounts[1]!.address,
+        storageKeys: ['0x01', '0x02'],
+      },
+    ],
+    gasUsed: toHex(30_000n),
+  }
+
+  const { calls, fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'tos_createAccessList':
+        return mockResult
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createPublicClient({
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  await expect(
+    client.createAccessList({
+      request: {
+        from: nativeAccounts[0]!.address,
+        to: nativeAccounts[1]!.address,
+        data: '0xdeadbeef',
+      },
+      blockTag: 'pending',
+    }),
+  ).resolves.toEqual(mockResult)
+
+  expect(calls[0]!.request).toMatchObject({
+    method: 'tos_createAccessList',
+    params: [
+      {
+        from: nativeAccounts[0]!.address,
+        to: nativeAccounts[1]!.address,
+        data: '0xdeadbeef',
+      },
+      'pending',
+    ],
+  })
+})
+
+test('netVersion returns the network version string', async () => {
+  const { calls, fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'net_version':
+        return '1001'
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createPublicClient({
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  await expect(client.netVersion()).resolves.toBe('1001')
+
+  expect(calls[0]!.request).toMatchObject({
+    method: 'net_version',
+    params: [],
+  })
+})
+
+test('netPeerCount returns the peer count as bigint', async () => {
+  const { calls, fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'net_peerCount':
+        return toHex(25n)
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createPublicClient({
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  await expect(client.netPeerCount()).resolves.toBe(25n)
+
+  expect(calls[0]!.request).toMatchObject({
+    method: 'net_peerCount',
+    params: [],
+  })
+})
+
+test('netListening returns whether the node is listening', async () => {
+  const { calls, fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'net_listening':
+        return true
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createPublicClient({
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  await expect(client.netListening()).resolves.toBe(true)
+
+  expect(calls[0]!.request).toMatchObject({
+    method: 'net_listening',
+    params: [],
+  })
+})
+
+test('clientVersion returns the client version string', async () => {
+  const { calls, fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'web3_clientVersion':
+        return 'TosNode/v1.2.3/linux-amd64'
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createPublicClient({
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  await expect(client.clientVersion()).resolves.toBe('TosNode/v1.2.3/linux-amd64')
+
+  expect(calls[0]!.request).toMatchObject({
+    method: 'web3_clientVersion',
+    params: [],
+  })
+})
+
+test('public client exposes agent discovery read-only methods', async () => {
+  const discoveryInfo = {
+    enabled: true,
+    profileVersion: 2,
+    talkProtocol: 'a2a/1.0',
+    nodeId: '0xnode1234',
+    nodeRecord: 'enr:-abc123',
+    primaryIdentity: nativeAccounts[0]!.address,
+    cardSequence: 5,
+    connectionModes: 3,
+    capabilities: ['llm-chat', 'tool-use'],
+    hasPublishedCard: true,
+  }
+  const searchResults = [
+    {
+      nodeId: '0xnode5678',
+      nodeRecord: 'enr:-def456',
+      primaryIdentity: nativeAccounts[1]!.address,
+      connectionModes: 1,
+      cardSequence: 2,
+      capabilities: ['llm-chat'],
+    },
+    {
+      nodeId: '0xnode9abc',
+      nodeRecord: 'enr:-ghi789',
+      primaryIdentity: nativeAccounts[2]!.address,
+      connectionModes: 2,
+      cardSequence: 3,
+      capabilities: ['tool-use'],
+      trust: {
+        registered: true,
+        suspended: false,
+        stake: '1000000',
+        reputation: '95',
+        ratingCount: '42',
+        capabilityRegistered: true,
+        hasOnchainCapability: true,
+      },
+    },
+  ]
+  const cardResponse = {
+    nodeId: '0xnode5678',
+    nodeRecord: 'enr:-def456',
+    cardJson: '{"name":"TestAgent","version":"1.0"}',
+  }
+  const directorySearchResults = [
+    {
+      nodeId: '0xnodeDIR1',
+      nodeRecord: 'enr:-dir001',
+      primaryIdentity: nativeAccounts[3]!.address,
+      capabilities: ['llm-chat', 'code-gen'],
+    },
+  ]
+
+  const { calls, fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'tos_agentDiscoveryInfo':
+        return discoveryInfo
+      case 'tos_agentDiscoverySearch':
+        return searchResults
+      case 'tos_agentDiscoveryGetCard':
+        return cardResponse
+      case 'tos_agentDiscoveryDirectorySearch':
+        return directorySearchResults
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createPublicClient({
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  // agentDiscoveryInfo
+  await expect(client.agentDiscoveryInfo()).resolves.toEqual(discoveryInfo)
+
+  // agentDiscoverySearch with limit
+  await expect(
+    client.agentDiscoverySearch({ capability: 'llm-chat', limit: 10 }),
+  ).resolves.toEqual(searchResults)
+
+  // agentDiscoveryGetCard
+  await expect(
+    client.agentDiscoveryGetCard({ nodeRecord: 'enr:-def456' }),
+  ).resolves.toEqual(cardResponse)
+
+  // agentDiscoveryDirectorySearch with limit
+  await expect(
+    client.agentDiscoveryDirectorySearch({
+      nodeRecord: 'enr:-dir-root',
+      capability: 'code-gen',
+      limit: 5,
+    }),
+  ).resolves.toEqual(directorySearchResults)
+
+  // Verify RPC payloads
+  expect(calls[0]!.request).toMatchObject({
+    method: 'tos_agentDiscoveryInfo',
+    params: [],
+  })
+  expect(calls[1]!.request).toMatchObject({
+    method: 'tos_agentDiscoverySearch',
+    params: ['llm-chat', 10],
+  })
+  expect(calls[2]!.request).toMatchObject({
+    method: 'tos_agentDiscoveryGetCard',
+    params: ['enr:-def456'],
+  })
+  expect(calls[3]!.request).toMatchObject({
+    method: 'tos_agentDiscoveryDirectorySearch',
+    params: ['enr:-dir-root', 'code-gen', 5],
+  })
+})
+
+test('public client agentDiscoverySearch omits limit when not provided', async () => {
+  const { calls, fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'tos_agentDiscoverySearch':
+        return []
+      case 'tos_agentDiscoveryDirectorySearch':
+        return []
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createPublicClient({
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  await expect(
+    client.agentDiscoverySearch({ capability: 'tool-use' }),
+  ).resolves.toEqual([])
+
+  await expect(
+    client.agentDiscoveryDirectorySearch({
+      nodeRecord: 'enr:-abc',
+      capability: 'llm-chat',
+    }),
+  ).resolves.toEqual([])
+
+  expect(calls[0]!.request).toMatchObject({
+    method: 'tos_agentDiscoverySearch',
+    params: ['tool-use'],
+  })
+  expect(calls[1]!.request).toMatchObject({
+    method: 'tos_agentDiscoveryDirectorySearch',
+    params: ['enr:-abc', 'llm-chat'],
+  })
+})
+
+test('wallet client exposes agentDiscoveryPublish and agentDiscoveryClear', async () => {
+  const account = privateKeyToAccount(accounts[0]!.privateKey)
+  const publishedInfo = {
+    enabled: true,
+    profileVersion: 3,
+    talkProtocol: 'a2a/1.0',
+    nodeId: '0xnodeWALLET',
+    nodeRecord: 'enr:-wallet123',
+    primaryIdentity: account.address,
+    cardSequence: 1,
+    connectionModes: 2,
+    capabilities: ['llm-chat', 'tool-use'],
+    hasPublishedCard: true,
+  }
+  const clearedInfo = {
+    enabled: true,
+    profileVersion: 4,
+    talkProtocol: 'a2a/1.0',
+    nodeId: '0xnodeWALLET',
+    nodeRecord: 'enr:-wallet123',
+    hasPublishedCard: false,
+  }
+
+  const { calls, fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'tos_agentDiscoveryPublish':
+        return publishedInfo
+      case 'tos_agentDiscoveryClear':
+        return clearedInfo
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createWalletClient({
+    account,
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  // agentDiscoveryPublish
+  await expect(
+    client.agentDiscoveryPublish({
+      primaryIdentity: account.address,
+      capabilities: ['llm-chat', 'tool-use'],
+      connectionModes: ['http', 'ws'],
+      cardJson: '{"name":"MyAgent"}',
+      cardSequence: 1,
+    }),
+  ).resolves.toEqual(publishedInfo)
+
+  // agentDiscoveryClear
+  await expect(client.agentDiscoveryClear()).resolves.toEqual(clearedInfo)
+
+  // Verify RPC payloads
+  expect(calls[0]!.request).toMatchObject({
+    method: 'tos_agentDiscoveryPublish',
+    params: [
+      {
+        primaryIdentity: account.address,
+        capabilities: ['llm-chat', 'tool-use'],
+        connectionModes: ['http', 'ws'],
+        cardJson: '{"name":"MyAgent"}',
+        cardSequence: 1,
+      },
+    ],
+  })
+  expect(calls[1]!.request).toMatchObject({
+    method: 'tos_agentDiscoveryClear',
+    params: [],
+  })
+})
+
+test('wallet client agentDiscoveryPublish omits optional fields when not provided', async () => {
+  const account = privateKeyToAccount(accounts[0]!.privateKey)
+  const publishedInfo = {
+    enabled: true,
+    profileVersion: 1,
+    talkProtocol: 'a2a/1.0',
+    hasPublishedCard: true,
+  }
+
+  const { calls, fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'tos_agentDiscoveryPublish':
+        return publishedInfo
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createWalletClient({
+    account,
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  await expect(
+    client.agentDiscoveryPublish({
+      primaryIdentity: account.address,
+      capabilities: ['llm-chat'],
+    }),
+  ).resolves.toEqual(publishedInfo)
+
+  const publishParams = calls[0]!.request.params[0] as Record<string, unknown>
+  expect(publishParams).toMatchObject({
+    primaryIdentity: account.address,
+    capabilities: ['llm-chat'],
+  })
+  expect(publishParams).not.toHaveProperty('connectionModes')
+  expect(publishParams).not.toHaveProperty('cardJson')
+  expect(publishParams).not.toHaveProperty('cardSequence')
+})
+
+test('public client exposes DPoS methods: getSnapshot, getValidators, getValidator, getEpochInfo', async () => {
+  const snapshotResponse = {
+    number: toHex(100n),
+    hash: '0xaabbccdd',
+    validators: [nativeAccounts[0]!.address, nativeAccounts[1]!.address],
+    validatorsMap: {
+      [nativeAccounts[0]!.address]: {},
+      [nativeAccounts[1]!.address]: {},
+    },
+    recents: { '99': nativeAccounts[0]!.address },
+    genesisTime: toHex(1700000000n),
+    periodMs: toHex(3000n),
+    finalizedNumber: toHex(95n),
+    finalizedHash: '0x11223344',
+  }
+  const validatorsResponse = [
+    nativeAccounts[0]!.address,
+    nativeAccounts[1]!.address,
+  ]
+  const validatorInfoResponse = {
+    address: nativeAccounts[0]!.address,
+    active: true,
+    index: 0,
+    snapshotBlock: toHex(100n),
+    snapshotHash: '0xaabbccdd',
+    recentSignedSlots: [toHex(98n), toHex(99n)],
+  }
+  const epochInfoResponse = {
+    blockNumber: toHex(100n),
+    epochLength: toHex(200n),
+    epochIndex: toHex(5n),
+    epochStart: toHex(1000n),
+    nextEpochStart: toHex(1200n),
+    blocksUntilEpoch: toHex(100n),
+    targetBlockPeriodMs: toHex(3000n),
+    turnLength: toHex(3n),
+    turnGroupDurationMs: toHex(9000n),
+    recentSignerWindow: toHex(21n),
+    maxValidators: toHex(21n),
+    validatorCount: toHex(2n),
+    snapshotHash: '0xaabbccdd',
+  }
+
+  const { calls, fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'dpos_getSnapshot':
+        return snapshotResponse
+      case 'dpos_getValidators':
+        return validatorsResponse
+      case 'dpos_getValidator':
+        return validatorInfoResponse
+      case 'dpos_getEpochInfo':
+        return epochInfoResponse
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createPublicClient({
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  // getSnapshot with explicit block number
+  await expect(
+    client.getSnapshot({ blockTag: 100n }),
+  ).resolves.toEqual(snapshotResponse)
+
+  // getValidators with default blockTag
+  await expect(
+    client.getValidators(),
+  ).resolves.toEqual(validatorsResponse)
+
+  // getValidator with address and explicit block number
+  await expect(
+    client.getValidator({
+      address: nativeAccounts[0]!.address,
+      blockTag: 100n,
+    }),
+  ).resolves.toEqual(validatorInfoResponse)
+
+  // getEpochInfo with explicit block number
+  await expect(
+    client.getEpochInfo({ blockTag: 100n }),
+  ).resolves.toEqual(epochInfoResponse)
+
+  // Verify RPC payloads
+  expect(calls[0]!.request).toMatchObject({
+    method: 'dpos_getSnapshot',
+    params: [toHex(100n)],
+  })
+  expect(calls[1]!.request).toMatchObject({
+    method: 'dpos_getValidators',
+    params: ['latest'],
+  })
+  expect(calls[2]!.request).toMatchObject({
+    method: 'dpos_getValidator',
+    params: [nativeAccounts[0]!.address, toHex(100n)],
+  })
+  expect(calls[3]!.request).toMatchObject({
+    method: 'dpos_getEpochInfo',
+    params: [toHex(100n)],
+  })
+})
+
+test('DPoS methods use default blockTag when called with no arguments', async () => {
+  const { calls, fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'dpos_getSnapshot':
+        return {
+          number: toHex(50n),
+          hash: '0x1111',
+          validators: [],
+          validatorsMap: {},
+          recents: {},
+          genesisTime: toHex(0n),
+          periodMs: toHex(3000n),
+        }
+      case 'dpos_getValidators':
+        return []
+      case 'dpos_getEpochInfo':
+        return {
+          blockNumber: toHex(50n),
+          epochLength: toHex(200n),
+          epochIndex: toHex(0n),
+          epochStart: toHex(0n),
+          nextEpochStart: toHex(200n),
+          blocksUntilEpoch: toHex(150n),
+          targetBlockPeriodMs: toHex(3000n),
+          turnLength: toHex(3n),
+          turnGroupDurationMs: toHex(9000n),
+          recentSignerWindow: toHex(21n),
+          maxValidators: toHex(21n),
+          validatorCount: toHex(0n),
+          snapshotHash: '0x1111',
+        }
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createPublicClient({
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  await client.getSnapshot()
+  await client.getValidators()
+  await client.getEpochInfo()
+
+  expect(calls[0]!.request).toMatchObject({
+    method: 'dpos_getSnapshot',
+    params: ['latest'],
+  })
+  expect(calls[1]!.request).toMatchObject({
+    method: 'dpos_getValidators',
+    params: ['latest'],
+  })
+  expect(calls[2]!.request).toMatchObject({
+    method: 'dpos_getEpochInfo',
+    params: ['latest'],
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Filter System
+// ---------------------------------------------------------------------------
+
+test('public client filter system: newBlockFilter, newPendingTransactionFilter, newFilter, getFilterChanges, getFilterLogs, uninstallFilter', async () => {
+  const { calls, fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'tos_newBlockFilter':
+        return '0xf1'
+      case 'tos_newPendingTransactionFilter':
+        return '0xf2'
+      case 'tos_newFilter':
+        return '0xf3'
+      case 'tos_getFilterChanges': {
+        const id = (request.params as string[])[0]
+        if (id === '0xf1') return ['0xblockhash1', '0xblockhash2']
+        if (id === '0xf3')
+          return [
+            {
+              address: nativeAccounts[1]!.address,
+              data: '0xaa',
+              topics: ['0x2222'],
+            },
+          ]
+        return []
+      }
+      case 'tos_getFilterLogs':
+        return [
+          {
+            address: nativeAccounts[1]!.address,
+            data: '0xbb',
+            topics: ['0x3333'],
+          },
+        ]
+      case 'tos_uninstallFilter':
+        return true
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createPublicClient({
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  // newBlockFilter
+  await expect(client.newBlockFilter()).resolves.toBe('0xf1')
+  expect(calls[0]!.request).toMatchObject({
+    method: 'tos_newBlockFilter',
+    params: [],
+  })
+
+  // newPendingTransactionFilter
+  await expect(client.newPendingTransactionFilter()).resolves.toBe('0xf2')
+  expect(calls[1]!.request).toMatchObject({
+    method: 'tos_newPendingTransactionFilter',
+    params: [],
+  })
+
+  // newFilter with address, topics, and block range
+  await expect(
+    client.newFilter({
+      address: nativeAccounts[1]!.address,
+      topics: ['0x2222'],
+      fromBlock: 10n,
+      toBlock: 50n,
+    }),
+  ).resolves.toBe('0xf3')
+  expect(calls[2]!.request).toMatchObject({
+    method: 'tos_newFilter',
+    params: [
+      {
+        address: nativeAccounts[1]!.address,
+        topics: ['0x2222'],
+        fromBlock: '0xa',
+        toBlock: '0x32',
+      },
+    ],
+  })
+
+  // getFilterChanges for block filter returns hex hashes
+  await expect(
+    client.getFilterChanges({ filterId: '0xf1' }),
+  ).resolves.toEqual(['0xblockhash1', '0xblockhash2'])
+  expect(calls[3]!.request).toMatchObject({
+    method: 'tos_getFilterChanges',
+    params: ['0xf1'],
+  })
+
+  // getFilterChanges for log filter returns logs
+  await expect(
+    client.getFilterChanges({ filterId: '0xf3' }),
+  ).resolves.toEqual([
+    {
+      address: nativeAccounts[1]!.address,
+      data: '0xaa',
+      topics: ['0x2222'],
+    },
+  ])
+
+  // getFilterLogs
+  await expect(
+    client.getFilterLogs({ filterId: '0xf3' }),
+  ).resolves.toEqual([
+    {
+      address: nativeAccounts[1]!.address,
+      data: '0xbb',
+      topics: ['0x3333'],
+    },
+  ])
+  expect(calls[5]!.request).toMatchObject({
+    method: 'tos_getFilterLogs',
+    params: ['0xf3'],
+  })
+
+  // uninstallFilter
+  await expect(
+    client.uninstallFilter({ filterId: '0xf1' }),
+  ).resolves.toBe(true)
+  expect(calls[6]!.request).toMatchObject({
+    method: 'tos_uninstallFilter',
+    params: ['0xf1'],
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Chain State queries
+// ---------------------------------------------------------------------------
+
+test('public client chain state: getChainProfile, getFinalizedBlock, getRetentionPolicy, getPruneWatermark, getAccount', async () => {
+  const chainProfile = {
+    chainId: toHex(999n),
+    networkId: toHex(999n),
+    targetBlockIntervalMs: toHex(3000n),
+    retainBlocks: toHex(1000n),
+    snapshotInterval: toHex(128n),
+  }
+  const finalizedBlock = {
+    number: toHex(50n),
+    hash: '0xfinalized',
+    timestamp: toHex(1700000000n),
+    validatorSetHash: '0xvshash',
+  }
+  const retentionPolicy = {
+    retainBlocks: toHex(1000n),
+    snapshotInterval: toHex(128n),
+    headBlock: toHex(100n),
+    oldestAvailableBlock: toHex(1n),
+  }
+  const pruneWatermark = {
+    headBlock: toHex(100n),
+    oldestAvailableBlock: toHex(1n),
+    retainBlocks: toHex(1000n),
+  }
+  const accountState = {
+    address: nativeAccounts[0]!.address,
+    nonce: toHex(7n),
+    balance: toHex(42n),
+    signer: {
+      type: 'secp256k1',
+      value: nativeAccounts[0]!.address,
+      defaulted: true,
+    },
+    blockNumber: toHex(99n),
+  }
+
+  const { calls, fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'tos_getChainProfile':
+        return chainProfile
+      case 'tos_getFinalizedBlock':
+        return finalizedBlock
+      case 'tos_getRetentionPolicy':
+        return retentionPolicy
+      case 'tos_getPruneWatermark':
+        return pruneWatermark
+      case 'tos_getAccount':
+        return accountState
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createPublicClient({
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  // getChainProfile
+  await expect(client.getChainProfile()).resolves.toEqual(chainProfile)
+  expect(calls[0]!.request).toMatchObject({
+    method: 'tos_getChainProfile',
+    params: [],
+  })
+
+  // getFinalizedBlock
+  await expect(client.getFinalizedBlock()).resolves.toEqual(finalizedBlock)
+  expect(calls[1]!.request).toMatchObject({
+    method: 'tos_getFinalizedBlock',
+    params: [],
+  })
+
+  // getRetentionPolicy
+  await expect(client.getRetentionPolicy()).resolves.toEqual(retentionPolicy)
+  expect(calls[2]!.request).toMatchObject({
+    method: 'tos_getRetentionPolicy',
+    params: [],
+  })
+
+  // getPruneWatermark
+  await expect(client.getPruneWatermark()).resolves.toEqual(pruneWatermark)
+  expect(calls[3]!.request).toMatchObject({
+    method: 'tos_getPruneWatermark',
+    params: [],
+  })
+
+  // getAccount
+  await expect(
+    client.getAccount({ address: nativeAccounts[0]!.address }),
+  ).resolves.toEqual(accountState)
+  expect(calls[4]!.request).toMatchObject({
+    method: 'tos_getAccount',
+    params: [nativeAccounts[0]!.address, 'latest'],
+  })
+})
+
+test('public client getFinalizedBlock returns null when no finalized block', async () => {
+  const { fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'tos_getFinalizedBlock':
+        return null
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createPublicClient({
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  await expect(client.getFinalizedBlock()).resolves.toBeNull()
+})
+
+// ---------------------------------------------------------------------------
+// Malicious Vote Evidence (PublicClient)
+// ---------------------------------------------------------------------------
+
+test('public client malicious vote evidence: getMaliciousVoteEvidence, listMaliciousVoteEvidence', async () => {
+  const evidenceRecord = {
+    evidenceHash: '0xevhash1',
+    offenseKey: '0xoffense1',
+    number: toHex(42n),
+    signer: nativeAccounts[1]!.address,
+    submittedBy: nativeAccounts[0]!.address,
+    submittedAt: toHex(1700000000n),
+    status: 'confirmed',
+  }
+
+  const { calls, fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'tos_getMaliciousVoteEvidence':
+        return evidenceRecord
+      case 'tos_listMaliciousVoteEvidence':
+        return [evidenceRecord]
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createPublicClient({
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  // getMaliciousVoteEvidence
+  await expect(
+    client.getMaliciousVoteEvidence({ hash: '0xevhash1' }),
+  ).resolves.toEqual(evidenceRecord)
+  expect(calls[0]!.request).toMatchObject({
+    method: 'tos_getMaliciousVoteEvidence',
+    params: ['0xevhash1', 'latest'],
+  })
+
+  // listMaliciousVoteEvidence with defaults
+  await expect(
+    client.listMaliciousVoteEvidence(),
+  ).resolves.toEqual([evidenceRecord])
+  expect(calls[1]!.request).toMatchObject({
+    method: 'tos_listMaliciousVoteEvidence',
+    params: [toHex(100n), 'latest'],
+  })
+
+  // listMaliciousVoteEvidence with explicit count and blockTag
+  await expect(
+    client.listMaliciousVoteEvidence({ count: 10, blockTag: '0x32' }),
+  ).resolves.toEqual([evidenceRecord])
+  expect(calls[2]!.request).toMatchObject({
+    method: 'tos_listMaliciousVoteEvidence',
+    params: [toHex(10n), '0x32'],
+  })
+})
+
+test('public client getMaliciousVoteEvidence returns null for unknown hash', async () => {
+  const { fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'tos_getMaliciousVoteEvidence':
+        return null
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createPublicClient({
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  await expect(
+    client.getMaliciousVoteEvidence({ hash: '0xunknown' }),
+  ).resolves.toBeNull()
+})
+
+// ---------------------------------------------------------------------------
+// Validator Maintenance (WalletClient)
+// ---------------------------------------------------------------------------
+
+test('wallet client validator maintenance: enterMaintenance, buildEnterMaintenanceTx, exitMaintenance, buildExitMaintenanceTx', async () => {
+  const account = privateKeyToAccount(accounts[0]!.privateKey)
+  const builtEnterTx = {
+    tx: {
+      from: account.address,
+      to: systemActionAddress,
+      nonce: toHex(5n),
+      gas: toHex(100_000n),
+      value: toHex(0n),
+      input: '0xenter1',
+    },
+    raw: '0xrawenter',
+  }
+  const builtExitTx = {
+    tx: {
+      from: account.address,
+      to: systemActionAddress,
+      nonce: toHex(6n),
+      gas: toHex(100_000n),
+      value: toHex(0n),
+      input: '0xexit1',
+    },
+    raw: '0xrawexit',
+  }
+
+  const { calls, fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'tos_enterMaintenance':
+        return '0xtxhash_enter'
+      case 'tos_buildEnterMaintenanceTx':
+        return builtEnterTx
+      case 'tos_exitMaintenance':
+        return '0xtxhash_exit'
+      case 'tos_buildExitMaintenanceTx':
+        return builtExitTx
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createWalletClient({
+    account,
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  // enterMaintenance
+  await expect(
+    client.enterMaintenance({ from: account.address, nonce: 5n, gas: 100_000n }),
+  ).resolves.toBe('0xtxhash_enter')
+  expect(calls[0]!.request).toMatchObject({
+    method: 'tos_enterMaintenance',
+    params: [{
+      from: account.address,
+      nonce: toHex(5n),
+      gas: toHex(100_000n),
+    }],
+  })
+
+  // buildEnterMaintenanceTx
+  await expect(
+    client.buildEnterMaintenanceTx({ from: account.address, nonce: 5n, gas: 100_000n }),
+  ).resolves.toEqual({
+    tx: {
+      from: account.address,
+      to: systemActionAddress,
+      nonce: 5n,
+      gas: 100_000n,
+      value: 0n,
+      input: '0xenter1',
+    },
+    raw: '0xrawenter',
+  })
+  expect(calls[1]!.request).toMatchObject({
+    method: 'tos_buildEnterMaintenanceTx',
+    params: [{
+      from: account.address,
+      nonce: toHex(5n),
+      gas: toHex(100_000n),
+    }],
+  })
+
+  // exitMaintenance
+  await expect(
+    client.exitMaintenance({ from: account.address, nonce: 6n, gas: 100_000n }),
+  ).resolves.toBe('0xtxhash_exit')
+  expect(calls[2]!.request).toMatchObject({
+    method: 'tos_exitMaintenance',
+    params: [{
+      from: account.address,
+      nonce: toHex(6n),
+      gas: toHex(100_000n),
+    }],
+  })
+
+  // buildExitMaintenanceTx
+  await expect(
+    client.buildExitMaintenanceTx({ from: account.address, nonce: 6n, gas: 100_000n }),
+  ).resolves.toEqual({
+    tx: {
+      from: account.address,
+      to: systemActionAddress,
+      nonce: 6n,
+      gas: 100_000n,
+      value: 0n,
+      input: '0xexit1',
+    },
+    raw: '0xrawexit',
+  })
+  expect(calls[3]!.request).toMatchObject({
+    method: 'tos_buildExitMaintenanceTx',
+    params: [{
+      from: account.address,
+      nonce: toHex(6n),
+      gas: toHex(100_000n),
+    }],
+  })
+})
+
+test('wallet client submitMaliciousVoteEvidence and buildSubmitMaliciousVoteEvidenceTx', async () => {
+  const account = privateKeyToAccount(accounts[0]!.privateKey)
+  const evidence = {
+    version: '1',
+    kind: 'equivocation',
+    chainId: toHex(999n),
+    number: toHex(42n),
+    signer: nativeAccounts[1]!.address,
+    signerType: 'secp256k1',
+    signerPubKey: '0xpubkey1',
+    first: { hash: '0xvote1' },
+    second: { hash: '0xvote2' },
+  } as const
+  const builtTx = {
+    tx: {
+      from: account.address,
+      to: systemActionAddress,
+      nonce: toHex(7n),
+      gas: toHex(200_000n),
+      value: toHex(0n),
+      input: '0xevidence1',
+    },
+    raw: '0xrawevidence',
+  }
+
+  const { calls, fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'tos_submitMaliciousVoteEvidence':
+        return '0xtxhash_evidence'
+      case 'tos_buildSubmitMaliciousVoteEvidenceTx':
+        return builtTx
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createWalletClient({
+    account,
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  // submitMaliciousVoteEvidence
+  await expect(
+    client.submitMaliciousVoteEvidence({
+      from: account.address,
+      nonce: 7n,
+      gas: 200_000n,
+      evidence,
+    }),
+  ).resolves.toBe('0xtxhash_evidence')
+  expect(calls[0]!.request).toMatchObject({
+    method: 'tos_submitMaliciousVoteEvidence',
+    params: [{
+      from: account.address,
+      nonce: toHex(7n),
+      gas: toHex(200_000n),
+      evidence,
+    }],
+  })
+
+  // buildSubmitMaliciousVoteEvidenceTx
+  await expect(
+    client.buildSubmitMaliciousVoteEvidenceTx({
+      from: account.address,
+      nonce: 7n,
+      gas: 200_000n,
+      evidence,
+    }),
+  ).resolves.toEqual({
+    tx: {
+      from: account.address,
+      to: systemActionAddress,
+      nonce: 7n,
+      gas: 200_000n,
+      value: 0n,
+      input: '0xevidence1',
+    },
+    raw: '0xrawevidence',
+  })
+  expect(calls[1]!.request).toMatchObject({
+    method: 'tos_buildSubmitMaliciousVoteEvidenceTx',
+    params: [{
+      from: account.address,
+      nonce: toHex(7n),
+      gas: toHex(200_000n),
+      evidence,
+    }],
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Signer Management (WalletClient)
+// ---------------------------------------------------------------------------
+
+test('wallet client signer management: setSigner, buildSetSignerTx', async () => {
+  const account = privateKeyToAccount(accounts[0]!.privateKey)
+  const builtTx = {
+    tx: {
+      from: account.address,
+      to: systemActionAddress,
+      nonce: toHex(10n),
+      gas: toHex(80_000n),
+      value: toHex(0n),
+      input: '0xsetsigner1',
+    },
+    raw: '0xrawsetsigner',
+  }
+
+  const { calls, fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'tos_setSigner':
+        return '0xtxhash_setsigner'
+      case 'tos_buildSetSignerTx':
+        return builtTx
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createWalletClient({
+    account,
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  // setSigner
+  await expect(
+    client.setSigner({
+      from: account.address,
+      nonce: 10n,
+      gas: 80_000n,
+      signerType: 'ed25519',
+      signerValue: '0x1111111111111111111111111111111111111111111111111111111111111111',
+    }),
+  ).resolves.toBe('0xtxhash_setsigner')
+  expect(calls[0]!.request).toMatchObject({
+    method: 'tos_setSigner',
+    params: [{
+      from: account.address,
+      nonce: toHex(10n),
+      gas: toHex(80_000n),
+      signerType: 'ed25519',
+      signerValue: '0x1111111111111111111111111111111111111111111111111111111111111111',
+    }],
+  })
+
+  // buildSetSignerTx
+  await expect(
+    client.buildSetSignerTx({
+      from: account.address,
+      nonce: 10n,
+      gas: 80_000n,
+      signerType: 'ed25519',
+      signerValue: '0x1111111111111111111111111111111111111111111111111111111111111111',
+    }),
+  ).resolves.toEqual({
+    tx: {
+      from: account.address,
+      to: systemActionAddress,
+      nonce: 10n,
+      gas: 80_000n,
+      value: 0n,
+      input: '0xsetsigner1',
+    },
+    raw: '0xrawsetsigner',
+  })
+  expect(calls[1]!.request).toMatchObject({
+    method: 'tos_buildSetSignerTx',
+    params: [{
+      from: account.address,
+      nonce: toHex(10n),
+      gas: toHex(80_000n),
+      signerType: 'ed25519',
+      signerValue: '0x1111111111111111111111111111111111111111111111111111111111111111',
+    }],
+  })
+})
+
+// ---------------------------------------------------------------------------
+// TxPool
+// ---------------------------------------------------------------------------
+
+test('public client txpool: txpoolContent, txpoolContentFrom, txpoolStatus, txpoolInspect', async () => {
+  const sampleTx = {
+    hash: '0xtxhash1',
+    from: nativeAccounts[0]!.address,
+    to: nativeAccounts[1]!.address,
+    value: toHex(100n),
+  }
+  const txpoolContentResult = {
+    pending: {
+      [nativeAccounts[0]!.address]: {
+        '0': sampleTx,
+      },
+    },
+    queued: {},
+  }
+  const txpoolContentFromResult = {
+    pending: { '0': sampleTx },
+    queued: {},
+  }
+  const txpoolStatusResult = {
+    pending: 5,
+    queued: 2,
+  }
+  const txpoolInspectResult = {
+    pending: {
+      [nativeAccounts[0]!.address]: {
+        '0': `${nativeAccounts[1]!.address}: 100 wei + 21000 gas`,
+      },
+    },
+    queued: {},
+  }
+
+  const { calls, fetchFn } = createJsonRpcFetch((request) => {
+    switch (request.method) {
+      case 'txpool_content':
+        return txpoolContentResult
+      case 'txpool_contentFrom':
+        return txpoolContentFromResult
+      case 'txpool_status':
+        return txpoolStatusResult
+      case 'txpool_inspect':
+        return txpoolInspectResult
+      default:
+        throw new Error(`Unexpected method: ${request.method}`)
+    }
+  })
+
+  const client = createPublicClient({
+    chain: tosTestnet,
+    transport: http(undefined, { fetchFn }),
+  })
+
+  // txpoolContent
+  await expect(client.txpoolContent()).resolves.toEqual(txpoolContentResult)
+  expect(calls[0]!.request).toMatchObject({
+    method: 'txpool_content',
+    params: [],
+  })
+
+  // txpoolContentFrom
+  await expect(
+    client.txpoolContentFrom({ address: nativeAccounts[0]!.address }),
+  ).resolves.toEqual(txpoolContentFromResult)
+  expect(calls[1]!.request).toMatchObject({
+    method: 'txpool_contentFrom',
+    params: [nativeAccounts[0]!.address],
+  })
+
+  // txpoolStatus
+  await expect(client.txpoolStatus()).resolves.toEqual(txpoolStatusResult)
+  expect(calls[2]!.request).toMatchObject({
+    method: 'txpool_status',
+    params: [],
+  })
+
+  // txpoolInspect
+  await expect(client.txpoolInspect()).resolves.toEqual(txpoolInspectResult)
+  expect(calls[3]!.request).toMatchObject({
+    method: 'txpool_inspect',
+    params: [],
+  })
 })

@@ -11,6 +11,15 @@ export {
 } from './accounts/index.js'
 export type { Address } from './types/address.js'
 export type {
+  AgentCardResponse,
+  AgentDirectorySearchParams,
+  AgentDiscoveryInfo,
+  AgentProviderTrustSummary,
+  AgentPublishParams,
+  AgentSearchParams,
+  AgentSearchResult,
+} from './types/agent.js'
+export type {
   ArtifactAnchorRecord,
   ArtifactAnchorSummary,
   ArtifactBundleKind,
@@ -37,6 +46,15 @@ export type {
   SignerSubmitRequest,
 } from './types/delegation.js'
 export type { Chain } from './types/chain.js'
+export type {
+  EpochInfo,
+  GetEpochInfoParams,
+  GetSnapshotParams,
+  GetValidatorParams,
+  GetValidatorsParams,
+  Snapshot,
+  ValidatorInfo,
+} from './types/dpos.js'
 export type {
   CallPackageParameters,
   DeployPackageParameters,
@@ -97,13 +115,25 @@ export type {
   TransactionType,
 } from './types/transaction.js'
 export type {
+  AccessListItem,
+  AccessListResult,
+  AccountProof,
+  AccountState,
   BlockTag,
+  ChainProfile,
   FeeHistory,
+  FilterId,
+  FinalizedBlock,
   HttpTransportConfig,
   LogFilter,
   LogFilterTopics,
+  MaliciousVoteEvidence,
+  MaliciousVoteEvidenceRecord,
+  NewFilterParams,
+  PruneWatermark,
   PublicClient,
   PublicClientConfig,
+  RetentionPolicy,
   RpcBlock,
   RpcLog,
   RpcSubscription,
@@ -112,14 +142,27 @@ export type {
   RpcTransactionReceipt,
   RpcTransactionRequest,
   SendSystemActionParameters,
+  SetSignerRpcParameters,
   SignTransactionParameters,
+  StorageProof,
+  SubmitMaliciousVoteEvidenceParameters,
+  SyncingStatus,
   TransportConfig,
+  ValidatorMaintenanceParameters,
   WaitForTransactionReceiptParameters,
   WebSocketLike,
   WebSocketTransportConfig,
   WalletClient,
   WalletClientConfig,
 } from './types/client.js'
+export type {
+  TxPoolContent,
+  TxPoolContentFrom,
+  TxPoolInspect,
+  TxPoolInspectSection,
+  TxPoolSection,
+  TxPoolStatus,
+} from './types/txpool.js'
 
 export {
   createArtifactProviderClient,

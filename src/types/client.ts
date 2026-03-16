@@ -1,6 +1,14 @@
 import type { LocalAccount } from '../accounts/types.js'
 
 import type { Address } from './address.js'
+import type {
+  AgentCardResponse,
+  AgentDirectorySearchParams,
+  AgentDiscoveryInfo,
+  AgentPublishParams,
+  AgentSearchParams,
+  AgentSearchResult,
+} from './agent.js'
 import type { Chain } from './chain.js'
 import type {
   CallPackageParameters,
@@ -22,6 +30,15 @@ import type {
 } from './lease.js'
 import type { Hex, Signature } from './misc.js'
 import type {
+  EpochInfo,
+  GetEpochInfoParams,
+  GetSnapshotParams,
+  GetValidatorParams,
+  GetValidatorsParams,
+  Snapshot,
+  ValidatorInfo,
+} from './dpos.js'
+import type {
   GetPrivBalanceParameters,
   GetPrivNonceParameters,
   PrivBalanceRecord,
@@ -29,6 +46,12 @@ import type {
   PrivTransferParameters,
   PrivUnshieldParameters,
 } from './privacy.js'
+import type {
+  TxPoolContent,
+  TxPoolContentFrom,
+  TxPoolInspect,
+  TxPoolStatus,
+} from './txpool.js'
 
 export type BlockTag =
   | 'latest'
@@ -197,6 +220,140 @@ export type WaitForTransactionReceiptParameters = {
   pollIntervalMs?: number | undefined
 }
 
+export type SyncingStatus = {
+  startingBlock: Hex
+  currentBlock: Hex
+  highestBlock: Hex
+  pulledStates?: Hex | undefined
+  knownStates?: Hex | undefined
+  [key: string]: unknown
+}
+
+export type StorageProof = {
+  key: Hex
+  value: Hex
+  proof: readonly Hex[]
+}
+
+export type AccountProof = {
+  address: Address
+  accountProof: readonly Hex[]
+  balance: Hex
+  codeHash: Hex
+  nonce: Hex
+  storageHash: Hex
+  storageProof: readonly StorageProof[]
+}
+
+export type AccessListItem = {
+  address: Address
+  storageKeys: readonly Hex[]
+}
+
+export type AccessListResult = {
+  accessList: readonly AccessListItem[]
+  gasUsed: Hex
+}
+
+/** Chain identity and storage/retention profile. */
+export type ChainProfile = {
+  chainId: Hex
+  networkId: Hex
+  targetBlockIntervalMs: Hex
+  retainBlocks: Hex
+  snapshotInterval: Hex
+}
+
+/** Finalized block checkpoint info. */
+export type FinalizedBlock = {
+  number: Hex
+  hash: Hex
+  timestamp: Hex
+  validatorSetHash: Hex
+}
+
+/** Block retention policy and current watermark. */
+export type RetentionPolicy = {
+  retainBlocks: Hex
+  snapshotInterval: Hex
+  headBlock: Hex
+  oldestAvailableBlock: Hex
+}
+
+/** Prune watermark response. */
+export type PruneWatermark = {
+  headBlock: Hex
+  oldestAvailableBlock: Hex
+  retainBlocks: Hex
+}
+
+/** Full account state including nonce, balance, and signer. */
+export type AccountState = {
+  address: Address
+  nonce: Hex
+  balance: Hex
+  signer: RpcSignerDescriptor
+  blockNumber: Hex
+}
+
+/** Malicious vote evidence containing two conflicting checkpoint votes. */
+export type MaliciousVoteEvidence = {
+  version: string
+  kind: string
+  chainId: Hex
+  number: Hex
+  signer: Address
+  signerType: string
+  signerPubKey: string
+  first: Record<string, unknown>
+  second: Record<string, unknown>
+}
+
+/** A recorded malicious vote evidence entry. */
+export type MaliciousVoteEvidenceRecord = {
+  evidenceHash: Hex
+  offenseKey: Hex
+  number: Hex
+  signer: Address
+  submittedBy: Address
+  submittedAt: Hex
+  status: string
+}
+
+/** Parameters for submitting malicious vote evidence. */
+export type SubmitMaliciousVoteEvidenceParameters = {
+  from: Address
+  nonce?: number | bigint | undefined
+  gas?: number | bigint | undefined
+  evidence: MaliciousVoteEvidence
+}
+
+/** Parameters for validator maintenance operations. */
+export type ValidatorMaintenanceParameters = {
+  from: Address
+  nonce?: number | bigint | undefined
+  gas?: number | bigint | undefined
+}
+
+/** Parameters for the setSigner RPC call. */
+export type SetSignerRpcParameters = {
+  from: Address
+  nonce?: number | bigint | undefined
+  gas?: number | bigint | undefined
+  signerType: string
+  signerValue: string
+}
+
+/** Opaque filter identifier returned by tos_newFilter / tos_newBlockFilter / tos_newPendingTransactionFilter. */
+export type FilterId = Hex
+
+export type NewFilterParams = {
+  address?: Address | readonly Address[] | undefined
+  topics?: LogFilterTopics | undefined
+  fromBlock?: BlockTag | number | bigint | undefined
+  toBlock?: BlockTag | number | bigint | undefined
+}
+
 export type PublicClient = {
   chain?: Chain | undefined
   transport: RpcTransport
@@ -265,6 +422,7 @@ export type PublicClient = {
   ): Promise<BuiltTransactionResult>
   estimateGas(parameters: {
     request: RpcTransactionRequest
+    blockTag?: BlockTag | undefined
   }): Promise<bigint>
   maxPriorityFeePerGas(): Promise<bigint>
   feeHistory(parameters: {
@@ -284,6 +442,88 @@ export type PublicClient = {
   waitForTransactionReceipt(
     parameters: WaitForTransactionReceiptParameters,
   ): Promise<RpcTransactionReceipt>
+  gasPrice(): Promise<bigint>
+  syncing(): Promise<false | SyncingStatus>
+  getBlockTransactionCountByNumber(parameters: {
+    blockNumber: BlockTag | number | bigint
+  }): Promise<bigint>
+  getBlockTransactionCountByHash(parameters: {
+    hash: Hex
+  }): Promise<bigint>
+  getTransactionByBlockNumberAndIndex(parameters: {
+    blockNumber: BlockTag | number | bigint
+    index: number | bigint
+  }): Promise<RpcTransaction | null>
+  getTransactionByBlockHashAndIndex(parameters: {
+    hash: Hex
+    index: number | bigint
+  }): Promise<RpcTransaction | null>
+  pendingTransactions(): Promise<readonly RpcTransaction[]>
+  getProof(parameters: {
+    address: Address
+    storageKeys: readonly Hex[]
+    blockTag?: BlockTag | undefined
+  }): Promise<AccountProof>
+  createAccessList(parameters: {
+    request: RpcTransactionRequest
+    blockTag?: BlockTag | undefined
+  }): Promise<AccessListResult>
+  netVersion(): Promise<string>
+  netPeerCount(): Promise<bigint>
+  netListening(): Promise<boolean>
+  clientVersion(): Promise<string>
+  // DPoS / Validator queries
+  getSnapshot(parameters?: GetSnapshotParams): Promise<Snapshot>
+  getValidators(parameters?: GetValidatorsParams): Promise<readonly Address[]>
+  getValidator(parameters: GetValidatorParams): Promise<ValidatorInfo>
+  getEpochInfo(parameters?: GetEpochInfoParams): Promise<EpochInfo>
+  // Filter system
+  // Agent Discovery (read-only)
+  agentDiscoveryInfo(): Promise<AgentDiscoveryInfo>
+  agentDiscoverySearch(parameters: AgentSearchParams): Promise<readonly AgentSearchResult[]>
+  agentDiscoveryGetCard(parameters: { nodeRecord: string }): Promise<AgentCardResponse>
+  agentDiscoveryDirectorySearch(parameters: AgentDirectorySearchParams): Promise<readonly AgentSearchResult[]>
+  // Filter system
+  newBlockFilter(): Promise<FilterId>
+  newPendingTransactionFilter(): Promise<FilterId>
+  newFilter(parameters: NewFilterParams): Promise<FilterId>
+  getFilterChanges(parameters: {
+    filterId: FilterId
+  }): Promise<readonly RpcLog[] | readonly Hex[]>
+  getFilterLogs(parameters: { filterId: FilterId }): Promise<readonly RpcLog[]>
+  uninstallFilter(parameters: { filterId: FilterId }): Promise<boolean>
+  // Chain state queries
+  getChainProfile(): Promise<ChainProfile>
+  getFinalizedBlock(): Promise<FinalizedBlock | null>
+  getRetentionPolicy(): Promise<RetentionPolicy>
+  getPruneWatermark(): Promise<PruneWatermark>
+  getAccount(parameters: {
+    address: Address
+    blockTag?: BlockTag | undefined
+  }): Promise<AccountState>
+  // WebSocket subscriptions
+  watchPendingTransactions(parameters: {
+    onTransaction(hash: Hex): void
+    onError?(error: Error): void
+  }): Promise<RpcSubscription>
+  watchSyncing(parameters: {
+    onStatus(status: SyncingStatus | false): void
+    onError?(error: Error): void
+  }): Promise<RpcSubscription>
+  // Malicious vote evidence (read-only)
+  getMaliciousVoteEvidence(parameters: {
+    hash: Hex
+    blockTag?: BlockTag | undefined
+  }): Promise<MaliciousVoteEvidenceRecord | null>
+  listMaliciousVoteEvidence(parameters?: {
+    count?: number | bigint | undefined
+    blockTag?: BlockTag | undefined
+  }): Promise<readonly MaliciousVoteEvidenceRecord[]>
+  // TxPool
+  txpoolContent(): Promise<TxPoolContent>
+  txpoolContentFrom(parameters: { address: Address }): Promise<TxPoolContentFrom>
+  txpoolStatus(): Promise<TxPoolStatus>
+  txpoolInspect(): Promise<TxPoolInspect>
 }
 
 export type WalletClientConfig = PublicClientConfig & {
@@ -344,6 +584,18 @@ export type WalletClient = PublicClient & {
   leaseClose(parameters: WalletLeaseCloseParameters): Promise<Hex>
   sendSystemAction(parameters: SendSystemActionParameters): Promise<Hex>
   setSignerMetadata(parameters: SetSignerMetadataParameters): Promise<Hex>
+  agentDiscoveryPublish(parameters: AgentPublishParams): Promise<AgentDiscoveryInfo>
+  agentDiscoveryClear(): Promise<AgentDiscoveryInfo>
+  // Validator maintenance
+  enterMaintenance(parameters: ValidatorMaintenanceParameters): Promise<Hex>
+  buildEnterMaintenanceTx(parameters: ValidatorMaintenanceParameters): Promise<BuiltTransactionResult>
+  exitMaintenance(parameters: ValidatorMaintenanceParameters): Promise<Hex>
+  buildExitMaintenanceTx(parameters: ValidatorMaintenanceParameters): Promise<BuiltTransactionResult>
+  submitMaliciousVoteEvidence(parameters: SubmitMaliciousVoteEvidenceParameters): Promise<Hex>
+  buildSubmitMaliciousVoteEvidenceTx(parameters: SubmitMaliciousVoteEvidenceParameters): Promise<BuiltTransactionResult>
+  // Signer management
+  setSigner(parameters: SetSignerRpcParameters): Promise<Hex>
+  buildSetSignerTx(parameters: SetSignerRpcParameters): Promise<BuiltTransactionResult>
 }
 
 export type {

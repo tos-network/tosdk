@@ -1,5 +1,5 @@
 {
-  "name": "tosdk",
+  "name": "@tosnetwork/tosdk",
   "description": "TypeScript SDK for TOS Network",
   "version": "0.1.0",
   "type": "module",

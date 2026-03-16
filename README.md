@@ -155,6 +155,117 @@ console.log(balance)
 See [examples/privacy-wallet.ts](./examples/privacy-wallet.ts) for a fuller
 example that wires all five privacy methods together.
 
+## Chain Queries
+
+The public client exposes additional chain query methods:
+
+- `gasPrice()` — current gas price
+- `syncing()` — node sync status (returns `false` or a `SyncingStatus` object)
+- `estimateGas({ request, blockTag? })` — estimate gas for a transaction
+- `getProof({ address, storageKeys, blockTag })` — Merkle proof for an account
+- `createAccessList({ request })` — generate an access list for a transaction
+
+**Net / Web3 utilities:**
+
+- `netVersion()` — network ID string
+- `netPeerCount()` — number of connected peers
+- `netListening()` — whether the node is listening for connections
+- `clientVersion()` — `web3_clientVersion` string
+
+**Block transaction queries:**
+
+- `getBlockTransactionCountByNumber({ blockNumber })` — tx count in a block by number
+- `getBlockTransactionCountByHash({ hash })` — tx count in a block by hash
+- `getTransactionByBlockNumberAndIndex({ blockNumber, index })` — single tx by block number + index
+- `getTransactionByBlockHashAndIndex({ hash, index })` — single tx by block hash + index
+- `pendingTransactions()` — list of pending transactions
+
+## Agent Discovery
+
+Read-only queries are on the public client; write operations require a wallet client.
+
+**Public client (read-only):**
+
+- `agentDiscoveryInfo()` — discovery subsystem info
+- `agentDiscoverySearch({ capability, limit? })` — search agents by capability
+- `agentDiscoveryGetCard({ nodeRecord })` — fetch a single agent card
+- `agentDiscoveryDirectorySearch({ nodeRecord, capability, limit? })` — directory-scoped search
+
+**Wallet client (write):**
+
+- `agentDiscoveryPublish({ primaryIdentity, capabilities, connectionModes, cardJson, cardSequence })` — publish an agent card
+- `agentDiscoveryClear()` — remove the published card
+
+```ts
+const results = await publicClient.agentDiscoverySearch({
+  capability: 'llm-inference',
+  limit: 10,
+})
+
+await walletClient.agentDiscoveryPublish({
+  primaryIdentity: 'did:example:123',
+  capabilities: ['llm-inference'],
+  connectionModes: ['direct'],
+  cardJson: '{"name":"my-agent"}',
+  cardSequence: 1,
+})
+```
+
+## DPoS / Validators
+
+Query the DPoS consensus layer through the public client:
+
+- `getSnapshot({ blockTag? })` — full validator snapshot at a block
+- `getValidators({ blockTag? })` — list of current validators
+- `getValidator({ address, blockTag? })` — details for a single validator
+- `getEpochInfo({ blockTag? })` — current epoch number, start block, and length
+
+## Filters and Subscriptions
+
+**Filter methods (HTTP polling):**
+
+- `newBlockFilter()` — create a block filter, returns a filter ID
+- `newPendingTransactionFilter()` — create a pending-tx filter
+- `newFilter({ address?, topics?, fromBlock?, toBlock? })` — create a log filter
+- `getFilterChanges({ filterId })` — poll for changes since last poll
+- `getFilterLogs({ filterId })` — get all logs matching a filter
+- `uninstallFilter({ filterId })` — remove a filter
+
+**WebSocket subscriptions:**
+
+- `watchBlocks({ onBlock, onError? })` — stream new block headers
+- `watchLogs({ onLog, onError?, address?, topics? })` — stream matching logs
+- `watchPendingTransactions({ onTransaction, onError? })` — stream pending tx hashes
+- `watchSyncing({ onStatus, onError? })` — stream sync status changes
+
+## Chain State
+
+- `getChainProfile()` — chain configuration profile
+- `getFinalizedBlock()` — latest finalized block number and hash
+- `getRetentionPolicy()` — data retention policy
+- `getPruneWatermark()` — current prune watermark
+- `getAccount({ address, blockTag? })` — full account state (balance, nonce, code hash, etc.)
+
+## Validator Maintenance
+
+Wallet client methods for validator operators:
+
+- `enterMaintenance()` / `buildEnterMaintenanceTx()` — enter maintenance mode
+- `exitMaintenance()` / `buildExitMaintenanceTx()` — exit maintenance mode
+- `submitMaliciousVoteEvidence({ evidence })` / `buildSubmitMaliciousVoteEvidenceTx({ evidence })` — submit vote evidence
+- `getMaliciousVoteEvidence({ hash, blockTag? })` — query a single evidence record (public client)
+- `listMaliciousVoteEvidence({ count?, blockTag? })` — list recent evidence (public client)
+- `setSigner({ address, signerType, publicKey })` / `buildSetSignerTx({ address, signerType, publicKey })` — set or update the validator signer key
+
+## Transaction Pool
+
+Inspect the node's transaction pool through the public client:
+
+- `txpoolContent()` — full pool contents grouped by sender
+- `txpoolContentFrom({ address })` — pool contents for a single address
+- `txpoolStatus()` — pending and queued counts
+- `txpoolInspect()` — human-readable summary of pool contents
+
 ## Provider Client Surfaces
 
 `tosdk` exposes reusable requester-side service clients so third-party
@@ -217,6 +328,9 @@ Repository examples are available under `examples/`:
 - `examples/requester-pack.ts` — requester pack
 - `examples/signer-pack.ts` — signer provider pack
 - `examples/storage-pack.ts` — storage provider pack
+- `examples/agent-discovery.ts` — agent discovery publish and search
+- `examples/validator-dpos.ts` — DPoS validator queries and maintenance
+- `examples/filters-and-subscriptions.ts` — filters, polling, and WebSocket subscriptions
 
 Validate the example pack with:
 

@@ -1,10 +1,17 @@
 import type { ErrorType } from '../errors/utils.js'
 import type {
+  AgentDiscoveryInfo,
+  AgentPublishParams,
+} from '../types/agent.js'
+import type {
   DeployPackageParameters,
   SendPackageTransactionParameters,
   SetSignerMetadataParameters,
   SendSystemActionParameters,
+  SetSignerRpcParameters,
   SignTransactionParameters,
+  SubmitMaliciousVoteEvidenceParameters,
+  ValidatorMaintenanceParameters,
   WalletClient,
   WalletClientConfig,
 } from '../types/client.js'
@@ -19,7 +26,7 @@ import type { Address } from '../types/address.js'
 import type { Hex, Signature } from '../types/misc.js'
 import type { TransactionSerializableNative } from '../types/transaction.js'
 import type { LocalAccount } from '../accounts/types.js'
-import { toHex, type ToHexErrorType } from '../utils/encoding/toHex.js'
+import { toHex, numberToHex, type ToHexErrorType } from '../utils/encoding/toHex.js'
 import { encodePackageCallData } from '../utils/contract/encodePackageCallData.js'
 import { encodePackageDeployData } from '../utils/contract/encodePackageDeployData.js'
 import { serializeTransaction } from '../utils/transaction/serializeTransaction.js'
@@ -272,6 +279,119 @@ export function createWalletClient(config: WalletClientConfig): WalletClient {
       value: 0n,
     })
 
+  const agentDiscoveryPublish = async ({
+    primaryIdentity,
+    capabilities,
+    connectionModes,
+    cardJson,
+    cardSequence,
+  }: AgentPublishParams): Promise<AgentDiscoveryInfo> =>
+    publicClient.request<AgentDiscoveryInfo>('tos_agentDiscoveryPublish', [
+      {
+        primaryIdentity: getAddress(primaryIdentity),
+        capabilities: [...capabilities],
+        ...(typeof connectionModes !== 'undefined'
+          ? { connectionModes: [...connectionModes] }
+          : {}),
+        ...(typeof cardJson !== 'undefined' ? { cardJson } : {}),
+        ...(typeof cardSequence !== 'undefined' ? { cardSequence } : {}),
+      },
+    ])
+
+  const agentDiscoveryClear = async (): Promise<AgentDiscoveryInfo> =>
+    publicClient.request<AgentDiscoveryInfo>('tos_agentDiscoveryClear')
+
+  const serializeMaintenanceArgs = (parameters: ValidatorMaintenanceParameters) => ({
+    from: getAddress(parameters.from),
+    ...(typeof parameters.nonce !== 'undefined'
+      ? { nonce: numberToHex(parameters.nonce) }
+      : {}),
+    ...(typeof parameters.gas !== 'undefined'
+      ? { gas: numberToHex(parameters.gas) }
+      : {}),
+  })
+
+  const enterMaintenance = async (parameters: ValidatorMaintenanceParameters): Promise<Hex> =>
+    publicClient.request<Hex>('tos_enterMaintenance', [
+      serializeMaintenanceArgs(parameters),
+    ])
+
+  const buildEnterMaintenanceTx = async (
+    parameters: ValidatorMaintenanceParameters,
+  ): Promise<BuiltTransactionResult> =>
+    parseBuiltTxResult(
+      await publicClient.request<RpcBuiltTxResult>('tos_buildEnterMaintenanceTx', [
+        serializeMaintenanceArgs(parameters),
+      ]),
+    )
+
+  const exitMaintenance = async (parameters: ValidatorMaintenanceParameters): Promise<Hex> =>
+    publicClient.request<Hex>('tos_exitMaintenance', [
+      serializeMaintenanceArgs(parameters),
+    ])
+
+  const buildExitMaintenanceTx = async (
+    parameters: ValidatorMaintenanceParameters,
+  ): Promise<BuiltTransactionResult> =>
+    parseBuiltTxResult(
+      await publicClient.request<RpcBuiltTxResult>('tos_buildExitMaintenanceTx', [
+        serializeMaintenanceArgs(parameters),
+      ]),
+    )
+
+  const serializeEvidenceArgs = (parameters: SubmitMaliciousVoteEvidenceParameters) => ({
+    from: getAddress(parameters.from),
+    ...(typeof parameters.nonce !== 'undefined'
+      ? { nonce: numberToHex(parameters.nonce) }
+      : {}),
+    ...(typeof parameters.gas !== 'undefined'
+      ? { gas: numberToHex(parameters.gas) }
+      : {}),
+    evidence: parameters.evidence,
+  })
+
+  const submitMaliciousVoteEvidence = async (
+    parameters: SubmitMaliciousVoteEvidenceParameters,
+  ): Promise<Hex> =>
+    publicClient.request<Hex>('tos_submitMaliciousVoteEvidence', [
+      serializeEvidenceArgs(parameters),
+    ])
+
+  const buildSubmitMaliciousVoteEvidenceTx = async (
+    parameters: SubmitMaliciousVoteEvidenceParameters,
+  ): Promise<BuiltTransactionResult> =>
+    parseBuiltTxResult(
+      await publicClient.request<RpcBuiltTxResult>('tos_buildSubmitMaliciousVoteEvidenceTx', [
+        serializeEvidenceArgs(parameters),
+      ]),
+    )
+
+  const serializeSetSignerArgs = (parameters: SetSignerRpcParameters) => ({
+    from: getAddress(parameters.from),
+    ...(typeof parameters.nonce !== 'undefined'
+      ? { nonce: numberToHex(parameters.nonce) }
+      : {}),
+    ...(typeof parameters.gas !== 'undefined'
+      ? { gas: numberToHex(parameters.gas) }
+      : {}),
+    signerType: parameters.signerType,
+    signerValue: parameters.signerValue,
+  })
+
+  const setSigner = async (parameters: SetSignerRpcParameters): Promise<Hex> =>
+    publicClient.request<Hex>('tos_setSigner', [
+      serializeSetSignerArgs(parameters),
+    ])
+
+  const buildSetSignerTx = async (
+    parameters: SetSignerRpcParameters,
+  ): Promise<BuiltTransactionResult> =>
+    parseBuiltTxResult(
+      await publicClient.request<RpcBuiltTxResult>('tos_buildSetSignerTx', [
+        serializeSetSignerArgs(parameters),
+      ]),
+    )
+
   return {
     ...publicClient,
     account: config.account,
@@ -287,6 +407,46 @@ export function createWalletClient(config: WalletClientConfig): WalletClient {
     leaseClose,
     sendSystemAction,
     setSignerMetadata,
+    agentDiscoveryPublish,
+    agentDiscoveryClear,
+    enterMaintenance,
+    buildEnterMaintenanceTx,
+    exitMaintenance,
+    buildExitMaintenanceTx,
+    submitMaliciousVoteEvidence,
+    buildSubmitMaliciousVoteEvidenceTx,
+    setSigner,
+    buildSetSignerTx,
+  }
+}
+
+type RpcBuiltTxResult = {
+  tx: {
+    from: Hex
+    to: Hex
+    nonce: Hex
+    gas: Hex
+    value: Hex
+    input: Hex
+  }
+  raw: Hex
+  contractAddress?: Hex | undefined
+}
+
+function parseBuiltTxResult(result: RpcBuiltTxResult): BuiltTransactionResult {
+  return {
+    tx: {
+      from: getAddress(result.tx.from),
+      to: getAddress(result.tx.to),
+      nonce: BigInt(result.tx.nonce),
+      gas: BigInt(result.tx.gas),
+      value: BigInt(result.tx.value),
+      input: result.tx.input,
+    },
+    raw: result.raw,
+    ...(result.contractAddress
+      ? { contractAddress: getAddress(result.contractAddress) }
+      : {}),
   }
 }
 
