@@ -1,0 +1,18 @@
+{
+  "extends": "../tsconfig.base.json",
+  "include": [".", "../src"],
+  "compilerOptions": {
+    "composite": false,
+    "noEmit": true,
+    "types": ["node"],
+    "baseUrl": ".",
+    "paths": {
+      "~test/*": ["./src/*"],
+      "tosdk": ["../src/index.ts"],
+      "tosdk/accounts": ["../src/accounts/index.ts"],
+      "tosdk/chains": ["../src/chains/index.ts"],
+      "tosdk/clients": ["../src/clients/index.ts"],
+      "tosdk/transports": ["../src/transports/index.ts"]
+    }
+  }
+}

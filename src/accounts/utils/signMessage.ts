@@ -1,0 +1,42 @@
+import type { ErrorType } from '../../errors/utils.js'
+import type { Hex, SignableMessage } from '../../types/misc.js'
+import {
+  type HashMessageErrorType,
+  hashMessage,
+} from '../../utils/signature/hashMessage.js'
+
+import { type SignErrorType, sign } from './sign.js'
+
+export type SignMessageParameters = {
+  /** The message to sign. */
+  message: SignableMessage
+  /** The private key to sign with. */
+  privateKey: Hex
+  /** The signer type to use. */
+  signerType?: string | undefined
+}
+
+export type SignMessageReturnType = Hex
+
+export type SignMessageErrorType =
+  | SignErrorType
+  | HashMessageErrorType
+  | ErrorType
+
+/**
+ * @description Calculates a prefixed message signature over the message hash.
+ *
+ * @returns The signature.
+ */
+export async function signMessage({
+  message,
+  privateKey,
+  signerType,
+}: SignMessageParameters): Promise<SignMessageReturnType> {
+  return await sign({
+    hash: hashMessage(message),
+    privateKey,
+    signerType,
+    to: 'hex',
+  })
+}

@@ -1,0 +1,123 @@
+{
+  "name": "tosdk",
+  "description": "TypeScript SDK for TOS Network",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/types/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "LICENSE",
+    "README.md",
+    "dist/**"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "default": "./dist/cjs/index.js"
+    },
+    "./accounts": {
+      "types": "./dist/types/accounts/index.d.ts",
+      "import": "./dist/esm/accounts/index.js",
+      "default": "./dist/cjs/accounts/index.js"
+    },
+    "./chains": {
+      "types": "./dist/types/chains/index.d.ts",
+      "import": "./dist/esm/chains/index.js",
+      "default": "./dist/cjs/chains/index.js"
+    },
+    "./clients": {
+      "types": "./dist/types/clients/index.d.ts",
+      "import": "./dist/esm/clients/index.js",
+      "default": "./dist/cjs/clients/index.js"
+    },
+    "./transports": {
+      "types": "./dist/types/transports/index.d.ts",
+      "import": "./dist/esm/transports/index.js",
+      "default": "./dist/cjs/transports/index.js"
+    },
+    "./surfaces": {
+      "types": "./dist/types/surfaces/index.d.ts",
+      "import": "./dist/esm/surfaces/index.js",
+      "default": "./dist/cjs/surfaces/index.js"
+    },
+    "./schema": {
+      "types": "./dist/types/schema/index.d.ts",
+      "import": "./dist/esm/schema/index.js",
+      "default": "./dist/cjs/schema/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "typesVersions": {
+    "*": {
+      "accounts": [
+        "./dist/types/accounts/index.d.ts"
+      ],
+      "chains": [
+        "./dist/types/chains/index.d.ts"
+      ],
+      "clients": [
+        "./dist/types/clients/index.d.ts"
+      ],
+      "transports": [
+        "./dist/types/transports/index.d.ts"
+      ],
+      "surfaces": [
+        "./dist/types/surfaces/index.d.ts"
+      ],
+      "schema": [
+        "./dist/types/schema/index.d.ts"
+      ]
+    }
+  },
+  "scripts": {
+    "clean": "rm -rf dist *.tsbuildinfo src/*.tsbuildinfo",
+    "build:cjs": "tsc --project ./tsconfig.build.json --module commonjs --moduleResolution node --outDir ./dist/cjs --removeComments --verbatimModuleSyntax false && printf '{\"type\":\"commonjs\",\"sideEffects\":false}' > ./dist/cjs/package.json",
+    "build:esm": "tsc --project ./tsconfig.build.json --outDir ./dist/esm && printf '{\"type\":\"module\",\"sideEffects\":false}' > ./dist/esm/package.json",
+    "build:types": "tsc --project ./tsconfig.build.json --declarationDir ./dist/types --emitDeclarationOnly --declaration --declarationMap",
+    "build": "pnpm clean && pnpm build:cjs && pnpm build:esm && pnpm build:types",
+    "prepare": "pnpm build",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test:unit": "vitest -c ./test/vitest.config.ts run",
+    "test:examples": "tsc -p ./examples/tsconfig.json --noEmit",
+    "test": "pnpm test:unit && pnpm test:examples"
+  },
+  "dependencies": {
+    "@noble/curves": "^1.9.7",
+    "@noble/hashes": "^1.8.0",
+    "@scure/bip32": "^1.7.0",
+    "@scure/bip39": "^1.6.0",
+    "abitype": "^1.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.5.2",
+    "typescript": "^5.9.2",
+    "vitest": "^4.0.15"
+  },
+  "packageManager": "pnpm@10.22.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/tos-network/tosdk",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tos-network/tosdk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tos-network/tosdk/issues"
+  },
+  "authors": [
+    "TOS Network"
+  ],
+  "keywords": [
+    "tos",
+    "tos-network",
+    "sdk",
+    "wallet",
+    "agent",
+    "typescript"
+  ]
+}

@@ -1,0 +1,66 @@
+import { secp256k1 } from '@noble/curves/secp256k1'
+import type { ErrorType } from '../errors/utils.js'
+import type { Hex } from '../types/misc.js'
+import { type ToHexErrorType, toHex } from '../utils/encoding/toHex.js'
+import { type ToAccountErrorType, toAccount } from './toAccount.js'
+import type { PrivateKeyAccount } from './types.js'
+import {
+  type PublicKeyToAddressErrorType,
+  publicKeyToAddress,
+} from './utils/publicKeyToAddress.js'
+import { type SignErrorType, sign } from './utils/sign.js'
+import { type SignMessageErrorType, signMessage } from './utils/signMessage.js'
+import {
+  type SignAuthorizationErrorType,
+  signAuthorization,
+} from './utils/signAuthorization.js'
+import {
+  type SignTransactionErrorType,
+  signTransaction,
+} from './utils/signTransaction.js'
+import {
+  type SignTypedDataErrorType,
+  signTypedData,
+} from './utils/signTypedData.js'
+
+export type PrivateKeyToAccountErrorType =
+  | ToAccountErrorType
+  | ToHexErrorType
+  | PublicKeyToAddressErrorType
+  | SignErrorType
+  | SignMessageErrorType
+  | SignAuthorizationErrorType
+  | SignTransactionErrorType
+  | SignTypedDataErrorType
+  | ErrorType
+
+export function privateKeyToAccount(privateKey: Hex): PrivateKeyAccount {
+  const publicKey = toHex(secp256k1.getPublicKey(privateKey.slice(2), false))
+  const address = publicKeyToAddress(publicKey)
+
+  const account = toAccount({
+    address,
+    async sign({ hash }) {
+      return sign({ hash, privateKey, to: 'hex' })
+    },
+    async signMessage({ message }) {
+      return signMessage({ message, privateKey })
+    },
+    async signAuthorization(transaction) {
+      return signAuthorization({ privateKey, transaction })
+    },
+    async signTransaction(transaction) {
+      return signTransaction({ privateKey, transaction })
+    },
+    async signTypedData(typedData) {
+      return signTypedData({ ...typedData, privateKey } as any)
+    },
+  })
+
+  return {
+    ...account,
+    publicKey,
+    signerType: 'secp256k1',
+    source: 'privateKey',
+  } as PrivateKeyAccount
+}

@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.base.json",
+  "include": ["src/**/*.ts", "test/**/*.ts"],
+  "exclude": ["dist/**", "node_modules/**"],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "paths": {
+      "~test/*": ["test/src/*"],
+      "tosdk": ["src/index.ts"],
+      "tosdk/accounts": ["src/accounts/index.ts"],
+      "tosdk/chains": ["src/chains/index.ts"],
+      "tosdk/clients": ["src/clients/index.ts"],
+      "tosdk/transports": ["src/transports/index.ts"],
+      "tosdk/surfaces": ["src/surfaces/index.ts"],
+      "tosdk/schema": ["src/schema/index.ts"]
+    },
+    "noEmit": true
+  }
+}
