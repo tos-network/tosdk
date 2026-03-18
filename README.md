@@ -4,6 +4,28 @@
 
 This repository is a native TypeScript SDK for TOS Network. It focuses on native accounts, 32-byte addresses, typed-data signing, native transaction signing, and a small RPC client surface for building wallets, agents, and services.
 
+## Install
+
+Install the published package directly:
+
+```sh
+pnpm add @tosnetwork/tosdk
+```
+
+Import it by its scoped package name:
+
+```ts
+import { createPublicClient, http } from '@tosnetwork/tosdk'
+import { privateKeyToAccount } from '@tosnetwork/tosdk/accounts'
+import { tosTestnet } from '@tosnetwork/tosdk/chains'
+```
+
+If you want to keep the shorter legacy import path used inside OpenFox, install it as an alias instead:
+
+```sh
+pnpm add tosdk@npm:@tosnetwork/tosdk
+```
+
 ## Current Direction
 
 - Native 32-byte account addresses

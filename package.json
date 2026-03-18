@@ -79,6 +79,7 @@
     "build:types": "tsc --project ./tsconfig.build.json --declarationDir ./dist/types --emitDeclarationOnly --declaration --declarationMap",
     "build": "pnpm clean && pnpm build:cjs && pnpm build:esm && pnpm build:types",
     "prepare": "pnpm build",
+    "prepublishOnly": "pnpm test && pnpm build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:unit": "vitest -c ./test/vitest.config.ts run",
     "test:examples": "tsc -p ./examples/tsconfig.json --noEmit",
@@ -104,10 +105,13 @@
   "homepage": "https://github.com/tos-network/tosdk",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tos-network/tosdk.git"
+    "url": "git+https://github.com/tos-network/tosdk.git"
   },
   "bugs": {
     "url": "https://github.com/tos-network/tosdk/issues"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "authors": [
     "TOS Network"
