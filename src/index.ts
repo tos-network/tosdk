@@ -32,6 +32,7 @@ export type {
   TrustTier as BoundaryTrustTier,
 } from './types/boundary.js'
 export type { GatewayConfig } from './types/gateway.js'
+export type { TNSResolveResult, TNSReverseResult } from './types/tns.js'
 export type {
   DelegateAuth,
   PolicyWalletSchemaInfo,

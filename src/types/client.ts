@@ -54,6 +54,7 @@ import type {
 } from './txpool.js'
 import type { AuditMeta, SessionProof } from './auditReceipt.js'
 import type { GatewayConfig } from './gateway.js'
+import type { TNSResolveResult, TNSReverseResult } from './tns.js'
 import type {
   DelegateAuth,
   RecoveryState,
@@ -577,6 +578,10 @@ export type PublicClient = {
   getAsyncFulfillment(parameters: {
     fulfillmentId: string
   }): Promise<AsyncFulfillment>
+
+  // -- TNS (TOS Name Service) --
+  tnsResolve(parameters: { name: string }): Promise<TNSResolveResult>
+  tnsReverse(parameters: { address: Address }): Promise<TNSReverseResult>
 
   // -- Schema --
   getBoundaryVersion(): Promise<string>

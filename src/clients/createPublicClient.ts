@@ -73,6 +73,7 @@ import type {
 } from '../types/privacy.js'
 import type { AuditMeta, SessionProof } from '../types/auditReceipt.js'
 import type { GatewayConfig } from '../types/gateway.js'
+import type { TNSResolveResult, TNSReverseResult } from '../types/tns.js'
 import type {
   DelegateAuth,
   RecoveryState,
@@ -627,6 +628,16 @@ export function createPublicClient(
     async getAsyncFulfillment({ fulfillmentId }) {
       return request<AsyncFulfillment>('settlement_getFulfillment', [
         fulfillmentId,
+      ])
+    },
+
+    // -- TNS (TOS Name Service) --
+    async tnsResolve({ name }) {
+      return request<TNSResolveResult>('tns_resolve', [name])
+    },
+    async tnsReverse({ address }) {
+      return request<TNSReverseResult>('tns_reverse', [
+        getAddress(address),
       ])
     },
 
