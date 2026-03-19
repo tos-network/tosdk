@@ -77,7 +77,7 @@ export function buildStoragePack() {
     requesterAddress,
     sizeBytes: 2048,
     ttlSeconds: 3600,
-    amountWei: '1000000000000000',
+    amountTomi: '1000000000000000',
     status: 'active',
     issuedAt: new Date().toISOString(),
     expiresAt: new Date(Date.now() + 3_600_000).toISOString(),

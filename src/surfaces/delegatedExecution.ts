@@ -17,7 +17,7 @@ import type { Hex } from '../types/misc.js'
 
 export type DelegatedExecutionRequest = {
   target: Address
-  valueWei?: string
+  valueTomi?: string
   data?: Hex
   gas?: string
   reason?: string
@@ -101,10 +101,10 @@ export function validateDelegatedRequest(
       errors.push('gas must be a positive number')
     }
   }
-  if (request.valueWei !== undefined) {
-    const valueNum = Number(request.valueWei)
+  if (request.valueTomi !== undefined) {
+    const valueNum = Number(request.valueTomi)
     if (Number.isNaN(valueNum) || valueNum < 0) {
-      errors.push('valueWei must be a non-negative number')
+      errors.push('valueTomi must be a non-negative number')
     }
   }
   return errors

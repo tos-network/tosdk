@@ -14,7 +14,7 @@ export type StorageReceipt = {
   requesterAddress: Address
   sizeBytes: number
   ttlSeconds: number
-  amountWei: string
+  amountTomi: string
   status: StorageReceiptStatus
   issuedAt: string
   expiresAt: string
@@ -77,7 +77,7 @@ export type StorageQuoteResponse = {
   bundle_kind: string
   size_bytes: number
   ttl_seconds: number
-  amount_wei: string
+  amount_tomi: string
   expires_at: string
 }
 
@@ -89,7 +89,7 @@ export type StorageLeaseResponse = {
   provider_address: Address
   size_bytes: number
   ttl_seconds: number
-  amount_wei: string
+  amount_tomi: string
   issued_at: string
   expires_at: string
   receipt_id: string

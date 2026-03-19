@@ -22,7 +22,7 @@ describe('storage helpers', () => {
         '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
       sizeBytes: 42,
       ttlSeconds: 3600,
-      amountWei: '1000',
+      amountTomi: '1000',
       status: 'active',
       issuedAt: '2026-03-09T00:00:00.000Z',
       expiresAt: '2026-03-09T01:00:00.000Z',

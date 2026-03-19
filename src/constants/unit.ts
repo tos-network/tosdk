@@ -1,12 +1,19 @@
-export const etherUnits = {
-  gwei: 9,
-  wei: 18,
+export const tosUnits = {
+  gtomi: 9,
+  tomi: 18,
 }
-export const gweiUnits = {
-  ether: -9,
-  wei: 9,
+export const gtomiUnits = {
+  tos: -9,
+  tomi: 9,
 }
-export const weiUnits = {
-  ether: -18,
-  gwei: -9,
+export const tomiUnits = {
+  tos: -18,
+  gtomi: -9,
 }
+
+/** @deprecated Use `tosUnits` instead. */
+export const etherUnits = tosUnits
+/** @deprecated Use `gtomiUnits` instead. */
+export const gweiUnits = gtomiUnits
+/** @deprecated Use `tomiUnits` instead. */
+export const weiUnits = tomiUnits

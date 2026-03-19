@@ -13,13 +13,13 @@ export const StorageReceiptSchema = createSchemaReference(
   [
     'version', 'receiptId', 'leaseId', 'cid', 'bundleHash', 'bundleKind',
     'providerAddress', 'requesterAddress', 'sizeBytes', 'ttlSeconds',
-    'amountWei', 'status', 'issuedAt', 'expiresAt', 'artifactUrl',
+    'amountTomi', 'status', 'issuedAt', 'expiresAt', 'artifactUrl',
     'paymentTxHash', 'metadata',
   ],
   [
     'version', 'receiptId', 'leaseId', 'cid', 'bundleHash', 'bundleKind',
     'providerAddress', 'requesterAddress', 'sizeBytes', 'ttlSeconds',
-    'amountWei', 'status', 'issuedAt', 'expiresAt',
+    'amountTomi', 'status', 'issuedAt', 'expiresAt',
   ],
 )
 
@@ -103,7 +103,7 @@ export const CommitteeRunRecordSchema = createSchemaReference(
   [
     'runId', 'kind', 'title', 'question', 'committeeSize', 'thresholdM',
     'members', 'subjectRef', 'artifactIds', 'status', 'winningResultHash',
-    'disagreement', 'rerunCount', 'maxReruns', 'payoutTotalWei', 'payouts',
+    'disagreement', 'rerunCount', 'maxReruns', 'payoutTotalTomi', 'payouts',
     'tally', 'createdAt', 'updatedAt', 'metadata',
   ],
   [

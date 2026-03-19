@@ -73,14 +73,14 @@ describe('validateAgainstSchema', () => {
       walletAddress: '0xbbb',
       requesterAddress: '0xbbb',
       targetAddress: '0xccc',
-      valueWei: '0',
+      valueTomi: '0',
       dataHex: '0x',
       gas: '21000',
       policyId: 'p-1',
       policyHash: '0x11',
       scopeHash: '0x22',
       trustTier: 'self_hosted',
-      amountWei: '1000',
+      amountTomi: '1000',
       status: 'quoted',
       expiresAt: '2026-03-11T00:00:00Z',
       createdAt: '2026-03-10T00:00:00Z',
@@ -103,7 +103,7 @@ describe('validateAgainstSchema', () => {
       requesterAddress: '0xbbb',
       sizeBytes: 1024,
       ttlSeconds: 3600,
-      amountWei: '1000',
+      amountTomi: '1000',
       status: 'active',
       issuedAt: '2026-03-10T00:00:00Z',
       expiresAt: '2026-03-10T01:00:00Z',
@@ -118,7 +118,7 @@ describe('detectDrift', () => {
     const value = {
       requester: {},
       target: '0xaaa',
-      value_wei: '0',
+      value_tomi: '0',
       data: '0x',
       gas: '21000',
       reason: 'test',
@@ -136,7 +136,7 @@ describe('detectDrift', () => {
     }
     const report = detectDrift(SignerQuoteRequestSchema, value)
     expect(report.hasDrift).toBe(true)
-    expect(report.missingFromSchema).toContain('value_wei')
+    expect(report.missingFromSchema).toContain('value_tomi')
     expect(report.missingFromSchema).toContain('data')
   })
 
@@ -144,7 +144,7 @@ describe('detectDrift', () => {
     const value = {
       requester: {},
       target: '0xaaa',
-      value_wei: '0',
+      value_tomi: '0',
       data: '0x',
       gas: '21000',
       reason: 'test',

@@ -71,7 +71,7 @@ export function buildProviderPack() {
     walletAddress: requesterAddress,
     requesterAddress,
     targetAddress: providerAddress,
-    valueWei: '0',
+    valueTomi: '0',
     dataHex: '0x',
     gas: '240000',
     policyId: 'provider-signer-policy-001',
@@ -80,7 +80,7 @@ export function buildProviderPack() {
     scopeHash:
       '0x1111111111111111111111111111111111111111111111111111111111111111',
     trustTier: 'self_hosted',
-    amountWei: '5000000000000000',
+    amountTomi: '5000000000000000',
     status: 'quoted',
     expiresAt: new Date(Date.now() + 300_000).toISOString(),
     createdAt: new Date().toISOString(),
@@ -95,7 +95,7 @@ export function buildProviderPack() {
     bundle_kind: 'public_news.capture',
     size_bytes: 4096,
     ttl_seconds: 7200,
-    amount_wei: '2000000000000000',
+    amount_tomi: '2000000000000000',
     expires_at: new Date(Date.now() + 600_000).toISOString(),
   }
 

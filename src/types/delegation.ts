@@ -19,7 +19,7 @@ export interface RequesterIdentityEnvelope {
 
 export interface SignerQuoteRequest extends RequesterIdentityEnvelope {
   target: Address
-  value_wei?: string
+  value_tomi?: string
   data?: Hex
   gas?: string
   reason?: string
@@ -32,7 +32,7 @@ export interface SignerQuoteResponse {
   walletAddress: Address
   requesterAddress: Address
   targetAddress: Address
-  valueWei: string
+  valueTomi: string
   dataHex: Hex
   gas: string
   policyId: string
@@ -40,7 +40,7 @@ export interface SignerQuoteResponse {
   scopeHash: Hex
   delegateIdentity?: string | null
   trustTier: SignerProviderTrustTier
-  amountWei: string
+  amountTomi: string
   status: string
   expiresAt: string
   createdAt: string
@@ -52,7 +52,7 @@ export interface SignerSubmitRequest extends RequesterIdentityEnvelope {
   request_nonce: string
   request_expires_at: number
   target: Address
-  value_wei?: string
+  value_tomi?: string
   data?: Hex
   gas?: string
   reason?: string
@@ -67,7 +67,7 @@ export interface SignerExecutionResponse {
   walletAddress: Address
   requesterAddress: Address
   targetAddress: Address
-  valueWei: string
+  valueTomi: string
   dataHex: Hex
   gas: string
   policyId: string
@@ -91,7 +91,7 @@ export interface SignerExecutionResponse {
 export interface PaymasterQuoteRequest extends RequesterIdentityEnvelope {
   wallet_address: Address
   target: Address
-  value_wei?: string
+  value_tomi?: string
   data?: Hex
   gas?: string
   reason?: string
@@ -107,7 +107,7 @@ export interface PaymasterQuoteResponse {
   requesterAddress: Address
   requesterSignerType: string
   targetAddress: Address
-  valueWei: string
+  valueTomi: string
   dataHex: Hex
   gas: string
   policyId: string
@@ -115,7 +115,7 @@ export interface PaymasterQuoteResponse {
   scopeHash: Hex
   delegateIdentity?: string | null
   trustTier: PaymasterProviderTrustTier
-  amountWei: string
+  amountTomi: string
   sponsorNonce: string
   sponsorExpiry: number
   status: string
@@ -131,7 +131,7 @@ export interface PaymasterAuthorizeRequest extends RequesterIdentityEnvelope {
   request_expires_at: number
   execution_nonce: string
   target: Address
-  value_wei: string
+  value_tomi: string
   data: Hex
   gas: string
   execution_signature: Signature
@@ -151,7 +151,7 @@ export interface PaymasterAuthorizationResponse {
   requesterAddress: Address
   requesterSignerType: string
   targetAddress: Address
-  valueWei: string
+  valueTomi: string
   dataHex: Hex
   gas: string
   policyId: string

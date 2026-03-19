@@ -54,7 +54,7 @@ describe('delegated execution surface', () => {
       walletAddress: addr2,
       requesterAddress: addr2,
       targetAddress: addr1,
-      valueWei: '0',
+      valueTomi: '0',
       dataHex: '0x',
       gas: '21000',
       policyId: 'p-1',
@@ -88,7 +88,7 @@ describe('delegated execution surface', () => {
       requesterAddress: addr2,
       requesterSignerType: 'secp256k1',
       targetAddress: addr1,
-      valueWei: '0',
+      valueTomi: '0',
       dataHex: '0x',
       gas: '21000',
       policyId: 'p-1',
@@ -132,18 +132,18 @@ describe('delegated execution surface', () => {
     const errors = validateDelegatedRequest({
       target: '' as Address,
       gas: '-1',
-      valueWei: '-100',
+      valueTomi: '-100',
     })
     expect(errors).toContain('target address is required')
     expect(errors).toContain('gas must be a positive number')
-    expect(errors).toContain('valueWei must be a non-negative number')
+    expect(errors).toContain('valueTomi must be a non-negative number')
   })
 
   test('validateDelegatedRequest passes for valid request', () => {
     const errors = validateDelegatedRequest({
       target: addr1,
       gas: '21000',
-      valueWei: '0',
+      valueTomi: '0',
     })
     expect(errors).toHaveLength(0)
   })

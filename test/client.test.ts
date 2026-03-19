@@ -360,7 +360,7 @@ test('public client exposes lease getters and transaction builders', async () =>
     expireAtBlock: toHex(210n),
     graceUntilBlock: toHex(250n),
     codeBytes: toHex(1024n),
-    depositWei: toHex(123_456_789n),
+    depositTomi: toHex(123_456_789n),
     scheduledPruneEpoch: toHex(3n),
     scheduledPruneSeq: toHex(5n),
     status: 'active',
@@ -437,7 +437,7 @@ test('public client exposes lease getters and transaction builders', async () =>
     expireAtBlock: 210n,
     graceUntilBlock: 250n,
     codeBytes: 1024n,
-    depositWei: 123_456_789n,
+    depositTomi: 123_456_789n,
     scheduledPruneEpoch: 3n,
     scheduledPruneSeq: 5n,
     status: 'active',
@@ -2834,7 +2834,7 @@ test('public client txpool: txpoolContent, txpoolContentFrom, txpoolStatus, txpo
   const txpoolInspectResult = {
     pending: {
       [nativeAccounts[0]!.address]: {
-        '0': `${nativeAccounts[1]!.address}: 100 wei + 21000 gas`,
+        '0': `${nativeAccounts[1]!.address}: 100 tomi + 21000 gas`,
       },
     },
     queued: {},

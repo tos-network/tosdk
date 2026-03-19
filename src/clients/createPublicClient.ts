@@ -671,7 +671,7 @@ type RpcLeaseRecord = {
   expireAtBlock: Hex
   graceUntilBlock: Hex
   codeBytes: Hex
-  depositWei?: Hex | null | undefined
+  depositTomi?: Hex | null | undefined
   scheduledPruneEpoch: Hex
   scheduledPruneSeq: Hex
   status: string
@@ -870,7 +870,7 @@ function parseLeaseRecord(record: RpcLeaseRecord | null): LeaseRecord | null {
     expireAtBlock: parseRpcQuantity(record.expireAtBlock),
     graceUntilBlock: parseRpcQuantity(record.graceUntilBlock),
     codeBytes: parseRpcQuantity(record.codeBytes),
-    depositWei: record.depositWei ? parseRpcQuantity(record.depositWei) : 0n,
+    depositTomi: record.depositTomi ? parseRpcQuantity(record.depositTomi) : 0n,
     scheduledPruneEpoch: parseRpcQuantity(record.scheduledPruneEpoch),
     scheduledPruneSeq: parseRpcQuantity(record.scheduledPruneSeq),
     status: record.status,

@@ -92,7 +92,7 @@ export type LeaseRecord = {
   expireAtBlock: bigint
   graceUntilBlock: bigint
   codeBytes: bigint
-  depositWei: bigint
+  depositTomi: bigint
   scheduledPruneEpoch: bigint
   scheduledPruneSeq: bigint
   status: LeaseStatus

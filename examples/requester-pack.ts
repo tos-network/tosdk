@@ -88,7 +88,7 @@ export function buildRequesterPack() {
         request_nonce: `req-${Date.now()}`,
         request_expires_at: Math.floor(Date.now() / 1000) + 300,
         target: quote.targetAddress,
-        value_wei: quote.valueWei,
+        value_tomi: quote.valueTomi,
         data: quote.dataHex,
         gas: quote.gas,
       })

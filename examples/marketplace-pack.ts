@@ -34,7 +34,7 @@ export function buildMarketplacePack() {
     kind: MarketBindingKind
     subjectId: string
     capability?: string
-    rewardWei?: string
+    rewardTomi?: string
   }): MarketBindingReceipt {
     return {
       version: 1,
@@ -47,7 +47,7 @@ export function buildMarketplacePack() {
       createdAt: new Date().toISOString(),
       metadata: {
         settlementMode: 'manual',
-        rewardWei: params.rewardWei ?? '50000000000000000',
+        rewardTomi: params.rewardTomi ?? '50000000000000000',
       },
     }
   }

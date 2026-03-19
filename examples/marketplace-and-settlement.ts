@@ -28,7 +28,7 @@ export function buildMarketplaceAndSettlementExample() {
     createdAt: '2026-03-11T00:00:00.000Z',
     metadata: {
       settlementMode: 'manual',
-      rewardWei: '50000000000000000',
+      rewardTomi: '50000000000000000',
     },
   }
 

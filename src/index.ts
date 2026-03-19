@@ -284,6 +284,30 @@ export {
   type ParseUnitsErrorType,
 } from './utils/unit/parseUnits.js'
 export {
+  formatTos,
+  formatEther,
+  type FormatTosErrorType,
+  type FormatEtherErrorType,
+} from './utils/unit/formatEther.js'
+export {
+  formatGtomi,
+  formatGwei,
+  type FormatGtomiErrorType,
+  type FormatGweiErrorType,
+} from './utils/unit/formatGwei.js'
+export {
+  formatUnits,
+  type FormatUnitsErrorType,
+} from './utils/unit/formatUnits.js'
+export {
+  tosUnits,
+  gtomiUnits,
+  tomiUnits,
+  etherUnits,
+  gweiUnits,
+  weiUnits,
+} from './constants/unit.js'
+export {
   defineChain,
   extendSchema,
   type DefineChainReturnType,

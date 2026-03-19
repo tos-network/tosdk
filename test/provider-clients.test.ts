@@ -29,7 +29,7 @@ test('storage provider client issues quote/put/head/get/audit/renew requests', a
       '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
     size_bytes: 42,
     ttl_seconds: 3600,
-    amount_wei: '1000',
+    amount_tomi: '1000',
     issued_at: '2026-03-10T00:00:00.000Z',
     expires_at: '2026-03-10T01:00:00.000Z',
     receipt_id: 'receipt-1',
@@ -49,7 +49,7 @@ test('storage provider client issues quote/put/head/get/audit/renew requests', a
         bundle_kind: leaseResponse.bundle_kind,
         size_bytes: leaseResponse.size_bytes,
         ttl_seconds: leaseResponse.ttl_seconds,
-        amount_wei: leaseResponse.amount_wei,
+        amount_tomi: leaseResponse.amount_tomi,
         expires_at: leaseResponse.expires_at,
       }
     }
