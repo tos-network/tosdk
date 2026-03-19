@@ -71,6 +71,15 @@ import type {
   PrivTransferParameters,
   PrivUnshieldParameters,
 } from '../types/privacy.js'
+import type {
+  AuditorDecryptParams,
+  AuditorDecryptResult,
+  DecryptionToken,
+  DecryptionTokenParams,
+  DisclosureProofParams,
+  DisclosureProofResult,
+  VerifyDisclosureParams,
+} from '../types/disclosure.js'
 import type { AuditMeta, SessionProof } from '../types/auditReceipt.js'
 import type { GatewayConfig } from '../types/gateway.js'
 import type { TNSResolveResult, TNSReverseResult } from '../types/tns.js'
@@ -206,6 +215,63 @@ export function createPublicClient(
       return request<Hex>('tos_privUnshield', [
         serializePrivUnshieldParameters(parameters),
       ])
+    },
+    // -- Selective Disclosure --
+    async privProveDisclosure(parameters: DisclosureProofParams) {
+      const rpc = await request<RpcDisclosureProofResult>(
+        'tos_privProveDisclosure',
+        [serializeDisclosureProofParams(parameters)],
+      )
+      return {
+        proof: rpc.proof,
+        blockNumber: parseRpcQuantity(rpc.blockNumber),
+      } satisfies DisclosureProofResult
+    },
+    async privVerifyDisclosure(parameters: VerifyDisclosureParams) {
+      return request<boolean>('tos_privVerifyDisclosure', [
+        serializeVerifyDisclosureParams(parameters),
+      ])
+    },
+    async privGenerateDecryptionToken(parameters: DecryptionTokenParams) {
+      const rpc = await request<RpcDecryptionTokenResult>(
+        'tos_privGenerateDecryptionToken',
+        [serializeDecryptionTokenParams(parameters)],
+      )
+      return {
+        pubkey: parameters.pubkey,
+        commitment: parameters.commitment,
+        handle: parameters.handle,
+        token: rpc.token,
+        dleqProof: rpc.dleqProof,
+        blockNumber: parseRpcQuantity(rpc.blockNumber),
+      } satisfies DecryptionToken
+    },
+    async privVerifyDecryptionToken(parameters: DecryptionToken) {
+      return request<boolean>('tos_privVerifyDecryptionToken', [
+        {
+          pubkey: parameters.pubkey,
+          commitment: parameters.commitment,
+          handle: parameters.handle,
+          token: parameters.token,
+          dleqProof: parameters.dleqProof,
+          blockNumber: numberToHex(parameters.blockNumber),
+        },
+      ])
+    },
+    async privDecryptWithToken({ token, commitment }: { token: Hex; commitment: Hex }) {
+      return parseRpcQuantity(
+        await request<Hex>('tos_privDecryptWithToken', [{ token, commitment }]),
+      )
+    },
+    async privDecryptWithAuditorKey(parameters: AuditorDecryptParams) {
+      const rpc = await request<{ amount: Hex; txType: string }>(
+        'tos_privDecryptWithAuditorKey',
+        [{ auditorPrivkey: parameters.auditorPrivkey, txHash: parameters.txHash }],
+      )
+      return {
+        amount: parseRpcQuantity(rpc.amount),
+        txType: rpc.txType,
+      } satisfies AuditorDecryptResult
     },
     async getLease({ address, blockTag = 'latest' }: GetLeaseParameters) {
       const record = await request<RpcLeaseRecord | null>('tos_getLease', [
@@ -908,6 +974,51 @@ function parseBuiltTransactionResult(
     ...(result.contractAddress
       ? { contractAddress: getAddress(result.contractAddress) }
       : {}),
+  }
+}
+
+// -- Selective Disclosure RPC types and serializers --
+
+type RpcDisclosureProofResult = {
+  proof: Hex
+  blockNumber: Hex
+}
+
+type RpcDecryptionTokenResult = {
+  token: Hex
+  dleqProof: Hex
+  blockNumber: Hex
+}
+
+function serializeDisclosureProofParams(params: DisclosureProofParams) {
+  return {
+    privkey: params.privkey,
+    pubkey: params.pubkey,
+    commitment: params.commitment,
+    handle: params.handle,
+    amount: numberToHex(params.amount),
+    blockNumber: numberToHex(params.blockNumber),
+  }
+}
+
+function serializeVerifyDisclosureParams(params: VerifyDisclosureParams) {
+  return {
+    pubkey: params.pubkey,
+    commitment: params.commitment,
+    handle: params.handle,
+    amount: numberToHex(params.amount),
+    proof: params.proof,
+    blockNumber: numberToHex(params.blockNumber),
+  }
+}
+
+function serializeDecryptionTokenParams(params: DecryptionTokenParams) {
+  return {
+    privkey: params.privkey,
+    pubkey: params.pubkey,
+    commitment: params.commitment,
+    handle: params.handle,
+    blockNumber: numberToHex(params.blockNumber),
   }
 }
 

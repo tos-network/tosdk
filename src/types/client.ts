@@ -47,6 +47,15 @@ import type {
   PrivUnshieldParameters,
 } from './privacy.js'
 import type {
+  AuditorDecryptParams,
+  AuditorDecryptResult,
+  DecryptionToken,
+  DecryptionTokenParams,
+  DisclosureProofParams,
+  DisclosureProofResult,
+  VerifyDisclosureParams,
+} from './disclosure.js'
+import type {
   TxPoolContent,
   TxPoolContentFrom,
   TxPoolInspect,
@@ -391,6 +400,13 @@ export type PublicClient = {
   privTransfer(parameters: PrivTransferParameters): Promise<Hex>
   privShield(parameters: PrivShieldParameters): Promise<Hex>
   privUnshield(parameters: PrivUnshieldParameters): Promise<Hex>
+  // -- Selective Disclosure --
+  privProveDisclosure(parameters: DisclosureProofParams): Promise<DisclosureProofResult>
+  privVerifyDisclosure(parameters: VerifyDisclosureParams): Promise<boolean>
+  privGenerateDecryptionToken(parameters: DecryptionTokenParams): Promise<DecryptionToken>
+  privVerifyDecryptionToken(parameters: DecryptionToken): Promise<boolean>
+  privDecryptWithToken(parameters: { token: Hex; commitment: Hex }): Promise<bigint>
+  privDecryptWithAuditorKey(parameters: AuditorDecryptParams): Promise<AuditorDecryptResult>
   getLease(parameters: GetLeaseParameters): Promise<LeaseRecord | null>
   getTransactionReceipt(parameters: {
     hash: Hex

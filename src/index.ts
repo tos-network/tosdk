@@ -140,6 +140,16 @@ export type {
   PrivUnshieldParameters,
 } from './types/privacy.js'
 export type {
+  AuditorDecryptParams,
+  AuditorDecryptResult,
+  DecryptionToken,
+  DecryptionTokenParams,
+  DisclosureProofParams,
+  DisclosureProofResult,
+  TokenDecryptResult,
+  VerifyDisclosureParams,
+} from './types/disclosure.js'
+export type {
   TerminalClass,
   TransactionSignatureBundle,
   TransactionSerializable,
