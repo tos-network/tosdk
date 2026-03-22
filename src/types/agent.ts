@@ -1,5 +1,7 @@
 import type { Address } from './address.js'
 
+export type AgentConnectionMode = 'talkreq' | 'https' | 'stream'
+
 /** Trust summary for an agent provider from on-chain registry. */
 export type AgentProviderTrustSummary = {
   registered: boolean
@@ -14,6 +16,46 @@ export type AgentProviderTrustSummary = {
   hasOnchainCapability: boolean
   localRankScore?: number | undefined
   localRankReason?: string | undefined
+}
+
+export type AgentPublishedCapability = {
+  name: string
+  mode?: string | undefined
+  ref?: string | undefined
+}
+
+export type AgentRoutingProfile = {
+  contract_type?: string | undefined
+  service_kinds?: readonly string[] | undefined
+  service_kind?: string | undefined
+  capability_kind?: string | undefined
+  pricing_kind?: string | undefined
+  base_fee?: string | undefined
+  privacy_mode?: string | undefined
+  receipt_mode?: string | undefined
+  disclosure_ready?: boolean | undefined
+  trust_floor_ref?: string | undefined
+}
+
+export type AgentPublishedThreatModel = {
+  family?: string | undefined
+  trust_boundary?: string | undefined
+  failure_posture?: string | undefined
+  runtime_dependency?: string | undefined
+  critical_invariants?: readonly string[] | undefined
+}
+
+export type AgentPublishedCard = {
+  version?: number | undefined
+  agent_id?: string | undefined
+  agent_address?: Address | undefined
+  profile_ref?: string | undefined
+  discovery_ref?: string | undefined
+  package_name?: string | undefined
+  package_version?: string | undefined
+  capabilities?: readonly AgentPublishedCapability[] | undefined
+  routing_profile?: AgentRoutingProfile | undefined
+  threat_model?: AgentPublishedThreatModel | undefined
 }
 
 /** Info returned by `tos_agentDiscoveryInfo`. */
@@ -46,6 +88,7 @@ export type AgentCardResponse = {
   nodeId: string
   nodeRecord: string
   cardJson: string
+  parsedCard?: AgentPublishedCard | undefined
 }
 
 /** Parameters for `agentDiscoverySearch`. */

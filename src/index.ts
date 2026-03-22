@@ -42,13 +42,25 @@ export type {
 } from './types/policyWallet.js'
 export type {
   AgentCardResponse,
+  AgentConnectionMode,
   AgentDirectorySearchParams,
   AgentDiscoveryInfo,
   AgentProviderTrustSummary,
   AgentPublishParams,
+  AgentPublishedCapability,
+  AgentPublishedCard,
+  AgentPublishedThreatModel,
+  AgentRoutingProfile,
   AgentSearchParams,
   AgentSearchResult,
 } from './types/agent.js'
+export type {
+  AgentProviderSelectionDiagnostics,
+  AgentProviderSelectionPreferences,
+  DiscoveredAgentProvider,
+  PreferredAgentProviderResolution,
+  TrustedDiscoveredAgentProvider,
+} from './surfaces/agentDiscovery.js'
 export type {
   ArtifactAnchorRecord,
   ArtifactAnchorSummary,
@@ -212,6 +224,23 @@ export type {
   TxPoolStatus,
 } from './types/txpool.js'
 
+export {
+  connectionModesFromMask,
+  discoverAgentProviders,
+  directoryDiscoverAgentProviders,
+  searchPreferredAgentProvider,
+  directorySearchPreferredAgentProvider,
+  searchPreferredAgentProviderWithDiagnostics,
+  directorySearchPreferredAgentProviderWithDiagnostics,
+  searchPreferredAgentProviderOrThrow,
+  directorySearchPreferredAgentProviderOrThrow,
+  rankTrustedAgentProviders,
+  filterPreferredAgentProviders,
+  summarizeAgentProviderDiagnostics,
+  requirePreferredAgentProvider,
+  resolvePreferredAgentProvider,
+  diagnoseAgentProviders,
+} from './surfaces/agentDiscovery.js'
 export {
   createArtifactProviderClient,
   buildPaymasterAuthorizationRequest,

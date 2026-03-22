@@ -1791,6 +1791,11 @@ test('public client exposes agent discovery read-only methods', async () => {
     nodeId: '0xnode5678',
     nodeRecord: 'enr:-def456',
     cardJson: '{"name":"TestAgent","version":"1.0"}',
+    parsedCard: {
+      agent_id: 'test-agent',
+      package_name: 'tolang.openlib.settlement',
+      capabilities: [{ name: 'llm-chat' }],
+    },
   }
   const directorySearchResults = [
     {

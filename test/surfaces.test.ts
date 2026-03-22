@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 
 import {
+  connectionModesFromMask,
   buildRequesterEnvelope,
   toDelegatedResult,
   toSponsoredResult,
@@ -21,15 +22,32 @@ import {
   isPublicProofArtifactKind,
   verifyProofArtifactAnchor,
   verifyProofArtifactReceipt,
+  discoverAgentProviders,
+  directoryDiscoverAgentProviders,
+  searchPreferredAgentProvider,
+  directorySearchPreferredAgentProvider,
+  searchPreferredAgentProviderWithDiagnostics,
+  directorySearchPreferredAgentProviderWithDiagnostics,
+  searchPreferredAgentProviderOrThrow,
+  directorySearchPreferredAgentProviderOrThrow,
+  rankTrustedAgentProviders,
+  filterPreferredAgentProviders,
+  summarizeAgentProviderDiagnostics,
+  requirePreferredAgentProvider,
+  resolvePreferredAgentProvider,
+  diagnoseAgentProviders,
 } from '../src/index.js'
 import type {
   Address,
+  AgentDirectorySearchParams,
+  AgentSearchParams,
   SignerQuoteResponse,
   SignerExecutionResponse,
   PaymasterQuoteResponse,
   PaymasterAuthorizationResponse,
   ArtifactVerificationReceipt,
   ArtifactAnchorSummary,
+  PublicClient,
 } from '../src/index.js'
 
 const addr1 =
@@ -345,5 +363,335 @@ describe('proof market surface', () => {
     })
     expect(anchor.kind).toBe('committee.aggregate')
     expect(anchor.summaryHash).toMatch(/^0x/)
+  })
+})
+
+describe('agent discovery surface', () => {
+  function createAgentDiscoveryClient(): PublicClient {
+    const cards = new Map([
+      ['enr:-artifact', {
+        nodeId: 'node-artifact',
+        nodeRecord: 'enr:-artifact',
+        cardJson: '{}',
+        parsedCard: {
+          agent_id: 'settlement-agent',
+          agent_address: addr1,
+          package_name: 'tolang.openlib.settlement',
+          capabilities: [{ name: 'settlement.execute' }],
+          routing_profile: {
+            service_kind: 'settlement',
+            service_kinds: ['settlement', 'marketplace'],
+            capability_kind: 'managed_execution',
+            privacy_mode: 'public',
+            receipt_mode: 'required',
+            disclosure_ready: false,
+          },
+        },
+      }],
+      ['enr:-package', {
+        nodeId: 'node-package',
+        nodeRecord: 'enr:-package',
+        cardJson: '{}',
+        parsedCard: {
+          agent_id: 'privacy-agent',
+          agent_address: addr2,
+          package_name: 'tolang.openlib.privacy',
+          capabilities: [{ name: 'settlement.execute' }],
+        },
+      }],
+      ['enr:-weak', {
+        nodeId: 'node-weak',
+        nodeRecord: 'enr:-weak',
+        cardJson: '{}',
+        parsedCard: {
+          agent_id: 'weak-agent',
+          capabilities: [{ name: 'settlement.execute' }],
+        },
+      }],
+    ])
+    return {
+      agentDiscoverySearch: async ({ capability }: AgentSearchParams) => {
+        if (capability === 'settlement.execute') {
+          return [
+            {
+              nodeId: 'node-weak',
+              nodeRecord: 'enr:-weak',
+              connectionModes: 1,
+              trust: {
+                registered: false,
+                suspended: false,
+                stake: '0',
+                reputation: '0',
+                ratingCount: '0',
+                capabilityRegistered: false,
+                hasOnchainCapability: false,
+                localRankScore: 99,
+              },
+            },
+            {
+              nodeId: 'node-artifact',
+              nodeRecord: 'enr:-artifact',
+              connectionModes: 3,
+              trust: {
+                registered: true,
+                suspended: false,
+                stake: '10',
+                reputation: '20',
+                ratingCount: '2',
+                capabilityRegistered: true,
+                hasOnchainCapability: true,
+                localRankScore: 80,
+              },
+            },
+            {
+              nodeId: 'node-package',
+              nodeRecord: 'enr:-package',
+              connectionModes: 5,
+              trust: {
+                registered: true,
+                suspended: false,
+                stake: '5',
+                reputation: '10',
+                ratingCount: '1',
+                capabilityRegistered: true,
+                hasOnchainCapability: true,
+                localRankScore: 70,
+              },
+            },
+          ]
+        }
+        return []
+      },
+      agentDiscoveryDirectorySearch: async ({
+        capability,
+      }: AgentDirectorySearchParams) => {
+        if (capability === 'settlement.execute') {
+          return [
+            {
+              nodeId: 'node-package',
+              nodeRecord: 'enr:-package',
+              connectionModes: 5,
+              trust: {
+                registered: true,
+                suspended: false,
+                stake: '5',
+                reputation: '10',
+                ratingCount: '1',
+                capabilityRegistered: true,
+                hasOnchainCapability: true,
+                localRankScore: 70,
+              },
+            },
+          ]
+        }
+        return []
+      },
+      agentDiscoveryGetCard: async ({ nodeRecord }: { nodeRecord: string }) =>
+        cards.get(nodeRecord)!,
+    } as unknown as PublicClient
+  }
+
+  test('connectionModesFromMask expands bitmask', () => {
+    expect(connectionModesFromMask(0x03)).toEqual(['talkreq', 'https'])
+    expect(connectionModesFromMask(0x04)).toEqual(['stream'])
+  })
+
+  test('discoverAgentProviders joins search results with parsed cards', async () => {
+    const client = createAgentDiscoveryClient()
+    const providers = await discoverAgentProviders(client, {
+      capability: 'settlement.execute',
+      limit: 5,
+    })
+    expect(providers).toHaveLength(3)
+    expect(providers[1]?.parsedCard?.agent_id).toBe('settlement-agent')
+    expect(providers[1]?.matchedCapability).toBe('settlement.execute')
+  })
+
+  test('directoryDiscoverAgentProviders joins directory results', async () => {
+    const client = createAgentDiscoveryClient()
+    const providers = await directoryDiscoverAgentProviders(client, {
+      nodeRecord: 'enr:-dir',
+      capability: 'settlement.execute',
+      limit: 3,
+    })
+    expect(providers).toHaveLength(1)
+    expect(providers[0]?.parsedCard?.package_name).toBe('tolang.openlib.privacy')
+  })
+
+  test('trusted/preferred provider helpers filter and resolve', async () => {
+    const client = createAgentDiscoveryClient()
+    const providers = await discoverAgentProviders(client, {
+      capability: 'settlement.execute',
+    })
+    const trusted = rankTrustedAgentProviders(providers)
+    expect(trusted.map((item) => item.provider.search.nodeId)).toEqual([
+      'node-artifact',
+      'node-package',
+    ])
+
+    const preferred = filterPreferredAgentProviders(trusted, {
+      requiredConnectionModes: ['https'],
+      serviceKind: 'settlement',
+      capabilityKind: 'managed_execution',
+      receiptMode: 'required',
+      minTrustScore: 75,
+    })
+    expect(preferred).toHaveLength(1)
+    expect(preferred[0]?.provider.search.nodeId).toBe('node-artifact')
+
+    const selected = resolvePreferredAgentProvider(trusted, {
+      packagePrefix: 'tolang.openlib.privacy',
+      requiredConnectionModes: ['stream'],
+    })
+    expect(selected?.provider.search.nodeId).toBe('node-package')
+  })
+
+  test('diagnoseAgentProviders explains trust and preference failures', async () => {
+    const client = createAgentDiscoveryClient()
+    const providers = await discoverAgentProviders(client, {
+      capability: 'settlement.execute',
+    })
+    const diagnostics = diagnoseAgentProviders(providers, {
+      requiredConnectionModes: ['https'],
+      serviceKind: 'settlement',
+      capabilityKind: 'managed_execution',
+      receiptMode: 'required',
+      minTrustScore: 75,
+    })
+    expect(diagnostics).toHaveLength(3)
+    expect(diagnostics[0]?.trusted).toBe(false)
+    expect(diagnostics[0]?.trustFailures).toContain('provider not registered')
+    expect(diagnostics[1]?.preferred).toBe(true)
+    expect(diagnostics[2]?.preferred).toBe(false)
+    expect(diagnostics[2]?.preferenceFailures.length).toBeGreaterThan(0)
+  })
+
+  test('searchPreferredAgentProvider resolves the best trusted match directly from the client', async () => {
+    const client = createAgentDiscoveryClient()
+    const selected = await searchPreferredAgentProvider(
+      client,
+      {
+        capability: 'settlement.execute',
+      },
+      {
+        requiredConnectionModes: ['https'],
+        serviceKind: 'settlement',
+        capabilityKind: 'managed_execution',
+        receiptMode: 'required',
+        minTrustScore: 75,
+      },
+    )
+    expect(selected?.provider.search.nodeId).toBe('node-artifact')
+
+    const directorySelected = await directorySearchPreferredAgentProvider(
+      client,
+      {
+        nodeRecord: 'enr:-dir',
+        capability: 'settlement.execute',
+      },
+      {
+        requiredConnectionModes: ['stream'],
+        packagePrefix: 'tolang.openlib.privacy',
+      },
+    )
+    expect(directorySelected?.provider.search.nodeId).toBe('node-package')
+  })
+
+  test('searchPreferredAgentProviderWithDiagnostics returns both the selected provider and explanation set', async () => {
+    const client = createAgentDiscoveryClient()
+    const resolved = await searchPreferredAgentProviderWithDiagnostics(
+      client,
+      {
+        capability: 'settlement.execute',
+      },
+      {
+        requiredConnectionModes: ['https'],
+        serviceKind: 'settlement',
+        capabilityKind: 'managed_execution',
+        receiptMode: 'required',
+        minTrustScore: 75,
+      },
+    )
+    expect(resolved.provider?.provider.search.nodeId).toBe('node-artifact')
+    expect(
+      resolved.diagnostics.find((item) => item.provider.search.nodeId === 'node-weak')
+        ?.trustFailures,
+    ).toContain('provider not registered')
+
+    const directoryResolved =
+      await directorySearchPreferredAgentProviderWithDiagnostics(
+        client,
+        {
+          nodeRecord: 'enr:-dir',
+          capability: 'settlement.execute',
+        },
+        {
+          requiredConnectionModes: ['stream'],
+          packagePrefix: 'tolang.openlib.privacy',
+        },
+    )
+    expect(directoryResolved.provider?.provider.search.nodeId).toBe('node-package')
+    expect(directoryResolved.diagnostics[0]?.preferred).toBe(true)
+  })
+
+  test('preferred-provider throw helpers and diagnostic summaries are usable by app code', async () => {
+    const client = createAgentDiscoveryClient()
+    const resolved = await searchPreferredAgentProviderWithDiagnostics(
+      client,
+      {
+        capability: 'settlement.execute',
+      },
+      {
+        requiredConnectionModes: ['https'],
+        serviceKind: 'settlement',
+        capabilityKind: 'managed_execution',
+        receiptMode: 'required',
+        minTrustScore: 75,
+      },
+    )
+    expect(requirePreferredAgentProvider(resolved, 'settlement.execute').provider.search.nodeId).toBe(
+      'node-artifact',
+    )
+
+    await expect(
+      searchPreferredAgentProviderOrThrow(
+        client,
+        { capability: 'settlement.execute' },
+        {
+          packagePrefix: 'tolang.openlib.nonexistent',
+        },
+      ),
+    ).rejects.toThrow(/package prefix mismatch/)
+
+    const missingDirectory = await directorySearchPreferredAgentProviderWithDiagnostics(
+      client,
+      {
+        nodeRecord: 'enr:-dir',
+        capability: 'settlement.execute',
+      },
+      {
+        requiredConnectionModes: ['https'],
+        packagePrefix: 'tolang.openlib.nonexistent',
+      },
+    )
+    expect(summarizeAgentProviderDiagnostics(missingDirectory.diagnostics)).toMatch(
+      /package prefix mismatch/,
+    )
+    expect(() =>
+      requirePreferredAgentProvider(missingDirectory, 'settlement.execute'),
+    ).toThrow(/package prefix mismatch/)
+    await expect(
+      directorySearchPreferredAgentProviderOrThrow(
+        client,
+        {
+          nodeRecord: 'enr:-dir',
+          capability: 'settlement.execute',
+        },
+        {
+          requiredConnectionModes: ['https'],
+          packagePrefix: 'tolang.openlib.nonexistent',
+        },
+      ),
+    ).rejects.toThrow(/package prefix mismatch/)
   })
 })

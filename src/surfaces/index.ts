@@ -1,4 +1,27 @@
 export {
+  connectionModesFromMask,
+  discoverAgentProviders,
+  directoryDiscoverAgentProviders,
+  searchPreferredAgentProvider,
+  directorySearchPreferredAgentProvider,
+  searchPreferredAgentProviderWithDiagnostics,
+  directorySearchPreferredAgentProviderWithDiagnostics,
+  searchPreferredAgentProviderOrThrow,
+  directorySearchPreferredAgentProviderOrThrow,
+  rankTrustedAgentProviders,
+  filterPreferredAgentProviders,
+  resolvePreferredAgentProvider,
+  diagnoseAgentProviders,
+  summarizeAgentProviderDiagnostics,
+  requirePreferredAgentProvider,
+  type AgentProviderSelectionDiagnostics,
+  type AgentProviderSelectionPreferences,
+  type DiscoveredAgentProvider,
+  type PreferredAgentProviderResolution,
+  type TrustedDiscoveredAgentProvider,
+} from './agentDiscovery.js'
+
+export {
   buildRequesterEnvelope,
   toDelegatedResult,
   toSponsoredResult,
