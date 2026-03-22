@@ -22,6 +22,11 @@ export type AgentPublishedCapability = {
   name: string
   mode?: string | undefined
   ref?: string | undefined
+  policy?: Record<string, unknown> | undefined
+  rate_limit?: string | undefined
+  max_amount?: string | undefined
+  price_model?: string | undefined
+  description?: string | undefined
 }
 
 export type AgentRoutingProfile = {

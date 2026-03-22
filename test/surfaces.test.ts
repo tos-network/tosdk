@@ -377,7 +377,11 @@ describe('agent discovery surface', () => {
           agent_id: 'settlement-agent',
           agent_address: addr1,
           package_name: 'tolang.openlib.settlement',
-          capabilities: [{ name: 'settlement.execute' }],
+          capabilities: [{
+            name: 'settlement.execute',
+            mode: 'sponsored',
+            policy: { per_request_fee_tos: '7' },
+          }],
           routing_profile: {
             service_kind: 'settlement',
             service_kinds: ['settlement', 'marketplace'],
@@ -396,7 +400,11 @@ describe('agent discovery surface', () => {
           agent_id: 'privacy-agent',
           agent_address: addr2,
           package_name: 'tolang.openlib.privacy',
-          capabilities: [{ name: 'settlement.execute' }],
+          capabilities: [{
+            name: 'settlement.execute',
+            mode: 'paid',
+            policy: { per_request_fee_tos: '2' },
+          }],
         },
       }],
       ['enr:-weak', {
@@ -405,7 +413,7 @@ describe('agent discovery surface', () => {
         cardJson: '{}',
         parsedCard: {
           agent_id: 'weak-agent',
-          capabilities: [{ name: 'settlement.execute' }],
+          capabilities: [{ name: 'settlement.execute', mode: 'sponsored' }],
         },
       }],
     ])
@@ -505,6 +513,7 @@ describe('agent discovery surface', () => {
     expect(providers).toHaveLength(3)
     expect(providers[1]?.parsedCard?.agent_id).toBe('settlement-agent')
     expect(providers[1]?.matchedCapability).toBe('settlement.execute')
+    expect(providers[1]?.matchedCapabilityEntry?.mode).toBe('sponsored')
   })
 
   test('directoryDiscoverAgentProviders joins directory results', async () => {
@@ -693,5 +702,47 @@ describe('agent discovery surface', () => {
         },
       ),
     ).rejects.toThrow(/package prefix mismatch/)
+  })
+
+  test('execution policy can prefer paid providers with lower advertised fees', async () => {
+    const client = createAgentDiscoveryClient()
+    const providers = await discoverAgentProviders(client, {
+      capability: 'settlement.execute',
+    })
+
+    const defaultTrusted = rankTrustedAgentProviders(providers)
+    expect(defaultTrusted.map((item) => item.provider.search.nodeId)).toEqual([
+      'node-artifact',
+      'node-package',
+    ])
+
+    const paidFirstTrusted = rankTrustedAgentProviders(providers, {
+      searchLimit: 10,
+      preferredModes: ['paid', 'hybrid', 'sponsored'],
+      preferLowerAdvertisedFee: true,
+    })
+    expect(paidFirstTrusted.map((item) => item.provider.search.nodeId)).toEqual([
+      'node-package',
+      'node-artifact',
+    ])
+  })
+
+  test('searchPreferredAgentProvider accepts execution-policy bundles', async () => {
+    const client = createAgentDiscoveryClient()
+    const selected = await searchPreferredAgentProvider(
+      client,
+      {
+        capability: 'settlement.execute',
+      },
+      {
+        requiredConnectionModes: ['stream'],
+        packagePrefix: 'tolang.openlib.privacy',
+      },
+      {
+        preferredModes: ['paid', 'hybrid', 'sponsored'],
+        preferLowerAdvertisedFee: true,
+      },
+    )
+    expect(selected?.provider.search.nodeId).toBe('node-package')
   })
 })

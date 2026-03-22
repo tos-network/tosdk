@@ -1,7 +1,9 @@
 export {
   connectionModesFromMask,
+  discoverCapabilityEntryFromCard,
   discoverAgentProviders,
   directoryDiscoverAgentProviders,
+  resolveAgentProviderExecutionPolicy,
   searchPreferredAgentProvider,
   directorySearchPreferredAgentProvider,
   searchPreferredAgentProviderWithDiagnostics,
@@ -14,6 +16,7 @@ export {
   diagnoseAgentProviders,
   summarizeAgentProviderDiagnostics,
   requirePreferredAgentProvider,
+  type AgentProviderExecutionPolicy,
   type AgentProviderSelectionDiagnostics,
   type AgentProviderSelectionPreferences,
   type DiscoveredAgentProvider,

@@ -226,8 +226,10 @@ export type {
 
 export {
   connectionModesFromMask,
+  discoverCapabilityEntryFromCard,
   discoverAgentProviders,
   directoryDiscoverAgentProviders,
+  resolveAgentProviderExecutionPolicy,
   searchPreferredAgentProvider,
   directorySearchPreferredAgentProvider,
   searchPreferredAgentProviderWithDiagnostics,
@@ -240,6 +242,7 @@ export {
   requirePreferredAgentProvider,
   resolvePreferredAgentProvider,
   diagnoseAgentProviders,
+  type AgentProviderExecutionPolicy,
 } from './surfaces/agentDiscovery.js'
 export {
   createArtifactProviderClient,

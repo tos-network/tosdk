@@ -8,6 +8,7 @@
 import type {
   AgentCardResponse,
   AgentConnectionMode,
+  AgentPublishedCapability,
   AgentPublishedCard,
   AgentSearchResult,
 } from '../types/agent.js'
@@ -18,6 +19,7 @@ export type DiscoveredAgentProvider = {
   card: AgentCardResponse
   parsedCard?: AgentPublishedCard | undefined
   matchedCapability?: string | undefined
+  matchedCapabilityEntry?: AgentPublishedCapability | undefined
 }
 
 export type TrustedDiscoveredAgentProvider = {
@@ -48,6 +50,12 @@ export type AgentProviderSelectionDiagnostics = {
 export type PreferredAgentProviderResolution = {
   provider: TrustedDiscoveredAgentProvider | undefined
   diagnostics: AgentProviderSelectionDiagnostics[]
+}
+
+export type AgentProviderExecutionPolicy = {
+  searchLimit: number
+  preferredModes: readonly string[]
+  preferLowerAdvertisedFee: boolean
 }
 
 const CONNECTION_MODE_BITS: Record<AgentConnectionMode, number> = {
@@ -93,6 +101,104 @@ export function discoverCapabilityFromCard(
   return parsedCard?.capabilities?.find((item) => item.name === capability)?.name
 }
 
+export function discoverCapabilityEntryFromCard(
+  parsedCard: AgentPublishedCard | undefined,
+  capability: string,
+): AgentPublishedCapability | undefined {
+  return parsedCard?.capabilities?.find((item) => item.name === capability)
+}
+
+function capabilityFamily(
+  capability: string,
+): 'sponsor' | 'observation' | 'oracle' | 'news' | 'proof' | 'storage' | 'gateway' | null {
+  if (capability.startsWith('sponsor.')) return 'sponsor'
+  if (capability.startsWith('observation.')) return 'observation'
+  if (capability.startsWith('oracle.')) return 'oracle'
+  if (capability.startsWith('news.')) return 'news'
+  if (capability.startsWith('proof.')) return 'proof'
+  if (capability.startsWith('storage.')) return 'storage'
+  if (capability.startsWith('gateway.')) return 'gateway'
+  return null
+}
+
+const DEFAULT_EXECUTION_POLICY: AgentProviderExecutionPolicy = {
+  searchLimit: 10,
+  preferredModes: ['sponsored', 'hybrid', 'paid'],
+  preferLowerAdvertisedFee: false,
+}
+
+const DEFAULT_EXECUTION_POLICY_PROFILES: Record<
+  NonNullable<ReturnType<typeof capabilityFamily>>,
+  AgentProviderExecutionPolicy
+> = {
+  sponsor: {
+    searchLimit: 6,
+    preferredModes: ['sponsored', 'hybrid', 'paid'],
+    preferLowerAdvertisedFee: false,
+  },
+  observation: {
+    searchLimit: 10,
+    preferredModes: ['paid', 'hybrid', 'sponsored'],
+    preferLowerAdvertisedFee: true,
+  },
+  oracle: {
+    searchLimit: 10,
+    preferredModes: ['paid', 'hybrid', 'sponsored'],
+    preferLowerAdvertisedFee: true,
+  },
+  news: {
+    searchLimit: 10,
+    preferredModes: ['paid', 'hybrid', 'sponsored'],
+    preferLowerAdvertisedFee: true,
+  },
+  proof: {
+    searchLimit: 10,
+    preferredModes: ['paid', 'hybrid', 'sponsored'],
+    preferLowerAdvertisedFee: true,
+  },
+  storage: {
+    searchLimit: 10,
+    preferredModes: ['paid', 'hybrid', 'sponsored'],
+    preferLowerAdvertisedFee: true,
+  },
+  gateway: {
+    searchLimit: 5,
+    preferredModes: ['sponsored', 'hybrid', 'paid'],
+    preferLowerAdvertisedFee: false,
+  },
+}
+
+export function resolveAgentProviderExecutionPolicy(
+  capability: string,
+  override: Partial<AgentProviderExecutionPolicy> = {},
+): AgentProviderExecutionPolicy {
+  const family = capabilityFamily(capability)
+  return {
+    ...DEFAULT_EXECUTION_POLICY,
+    ...(family ? DEFAULT_EXECUTION_POLICY_PROFILES[family] : {}),
+    ...override,
+  }
+}
+
+function providerModeScore(
+  provider: DiscoveredAgentProvider,
+  policy: AgentProviderExecutionPolicy,
+): number {
+  const mode = provider.matchedCapabilityEntry?.mode
+  const idx = mode ? policy.preferredModes.findIndex((item) => item === mode) : -1
+  if (idx === -1) return 0
+  return policy.preferredModes.length - idx
+}
+
+function providerAdvertisedFee(provider: DiscoveredAgentProvider): bigint | null {
+  const raw = provider.matchedCapabilityEntry?.policy
+  const perRequest = typeof raw?.per_request_fee_tos === 'string' ? raw.per_request_fee_tos : undefined
+  if (perRequest && /^\d+$/.test(perRequest)) return BigInt(perRequest)
+  const sessionFee = typeof raw?.session_fee_tos === 'string' ? raw.session_fee_tos : undefined
+  if (sessionFee && /^\d+$/.test(sessionFee)) return BigInt(sessionFee)
+  return null
+}
+
 export async function discoverAgentProviders(
   client: PublicClient,
   parameters: {
@@ -110,6 +216,7 @@ export async function discoverAgentProviders(
       card,
       parsedCard,
       matchedCapability: discoverCapabilityFromCard(parsedCard, parameters.capability),
+      matchedCapabilityEntry: discoverCapabilityEntryFromCard(parsedCard, parameters.capability),
     })
   }
   return providers
@@ -133,6 +240,7 @@ export async function directoryDiscoverAgentProviders(
       card,
       parsedCard,
       matchedCapability: discoverCapabilityFromCard(parsedCard, parameters.capability),
+      matchedCapabilityEntry: discoverCapabilityEntryFromCard(parsedCard, parameters.capability),
     })
   }
   return providers
@@ -140,6 +248,7 @@ export async function directoryDiscoverAgentProviders(
 
 export function rankTrustedAgentProviders(
   providers: readonly DiscoveredAgentProvider[],
+  executionPolicy: AgentProviderExecutionPolicy = DEFAULT_EXECUTION_POLICY,
 ): TrustedDiscoveredAgentProvider[] {
   return providers
     .filter((provider) => {
@@ -151,8 +260,24 @@ export function rankTrustedAgentProviders(
       trustScore: provider.search.trust?.localRankScore ?? 0,
     }))
     .sort((left, right) => {
+      const leftMode = providerModeScore(left.provider, executionPolicy)
+      const rightMode = providerModeScore(right.provider, executionPolicy)
+      if (leftMode !== rightMode) {
+        return rightMode - leftMode
+      }
       if (left.trustScore !== right.trustScore) {
         return right.trustScore - left.trustScore
+      }
+      if (executionPolicy.preferLowerAdvertisedFee) {
+        const leftFee = providerAdvertisedFee(left.provider)
+        const rightFee = providerAdvertisedFee(right.provider)
+        if (leftFee !== null || rightFee !== null) {
+          if (leftFee === null) return 1
+          if (rightFee === null) return -1
+          if (leftFee !== rightFee) {
+            return leftFee < rightFee ? -1 : 1
+          }
+        }
       }
       return left.provider.search.nodeRecord.localeCompare(right.provider.search.nodeRecord)
     })
@@ -231,9 +356,14 @@ export async function searchPreferredAgentProvider(
     limit?: number | undefined
   },
   prefs: AgentProviderSelectionPreferences = {},
+  executionPolicy?: Partial<AgentProviderExecutionPolicy>,
 ): Promise<TrustedDiscoveredAgentProvider | undefined> {
-  const providers = await discoverAgentProviders(client, parameters)
-  const trusted = rankTrustedAgentProviders(providers)
+  const policy = resolveAgentProviderExecutionPolicy(parameters.capability, executionPolicy)
+  const providers = await discoverAgentProviders(client, {
+    ...parameters,
+    limit: parameters.limit ?? policy.searchLimit,
+  })
+  const trusted = rankTrustedAgentProviders(providers, policy)
   return resolvePreferredAgentProvider(trusted, prefs)
 }
 
@@ -245,9 +375,14 @@ export async function directorySearchPreferredAgentProvider(
     limit?: number | undefined
   },
   prefs: AgentProviderSelectionPreferences = {},
+  executionPolicy?: Partial<AgentProviderExecutionPolicy>,
 ): Promise<TrustedDiscoveredAgentProvider | undefined> {
-  const providers = await directoryDiscoverAgentProviders(client, parameters)
-  const trusted = rankTrustedAgentProviders(providers)
+  const policy = resolveAgentProviderExecutionPolicy(parameters.capability, executionPolicy)
+  const providers = await directoryDiscoverAgentProviders(client, {
+    ...parameters,
+    limit: parameters.limit ?? policy.searchLimit,
+  })
+  const trusted = rankTrustedAgentProviders(providers, policy)
   return resolvePreferredAgentProvider(trusted, prefs)
 }
 
@@ -258,9 +393,14 @@ export async function searchPreferredAgentProviderWithDiagnostics(
     limit?: number | undefined
   },
   prefs: AgentProviderSelectionPreferences = {},
+  executionPolicy?: Partial<AgentProviderExecutionPolicy>,
 ): Promise<PreferredAgentProviderResolution> {
-  const providers = await discoverAgentProviders(client, parameters)
-  const trusted = rankTrustedAgentProviders(providers)
+  const policy = resolveAgentProviderExecutionPolicy(parameters.capability, executionPolicy)
+  const providers = await discoverAgentProviders(client, {
+    ...parameters,
+    limit: parameters.limit ?? policy.searchLimit,
+  })
+  const trusted = rankTrustedAgentProviders(providers, policy)
   return {
     provider: resolvePreferredAgentProvider(trusted, prefs),
     diagnostics: diagnoseAgentProviders(providers, prefs),
@@ -274,9 +414,10 @@ export async function searchPreferredAgentProviderOrThrow(
     limit?: number | undefined
   },
   prefs: AgentProviderSelectionPreferences = {},
+  executionPolicy?: Partial<AgentProviderExecutionPolicy>,
 ): Promise<TrustedDiscoveredAgentProvider> {
   return requirePreferredAgentProvider(
-    await searchPreferredAgentProviderWithDiagnostics(client, parameters, prefs),
+    await searchPreferredAgentProviderWithDiagnostics(client, parameters, prefs, executionPolicy),
     parameters.capability,
   )
 }
@@ -289,9 +430,14 @@ export async function directorySearchPreferredAgentProviderWithDiagnostics(
     limit?: number | undefined
   },
   prefs: AgentProviderSelectionPreferences = {},
+  executionPolicy?: Partial<AgentProviderExecutionPolicy>,
 ): Promise<PreferredAgentProviderResolution> {
-  const providers = await directoryDiscoverAgentProviders(client, parameters)
-  const trusted = rankTrustedAgentProviders(providers)
+  const policy = resolveAgentProviderExecutionPolicy(parameters.capability, executionPolicy)
+  const providers = await directoryDiscoverAgentProviders(client, {
+    ...parameters,
+    limit: parameters.limit ?? policy.searchLimit,
+  })
+  const trusted = rankTrustedAgentProviders(providers, policy)
   return {
     provider: resolvePreferredAgentProvider(trusted, prefs),
     diagnostics: diagnoseAgentProviders(providers, prefs),
@@ -306,12 +452,14 @@ export async function directorySearchPreferredAgentProviderOrThrow(
     limit?: number | undefined
   },
   prefs: AgentProviderSelectionPreferences = {},
+  executionPolicy?: Partial<AgentProviderExecutionPolicy>,
 ): Promise<TrustedDiscoveredAgentProvider> {
   return requirePreferredAgentProvider(
     await directorySearchPreferredAgentProviderWithDiagnostics(
       client,
       parameters,
       prefs,
+      executionPolicy,
     ),
     parameters.capability,
   )
